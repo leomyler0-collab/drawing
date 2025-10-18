@@ -28,20 +28,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleAdminLogin = async () => {
-    setEmail('leomyler0@gmail.com');
-    setPassword('SuperBoy2020');
-    setLoading(true);
-
-    try {
-      await login('leomyler0@gmail.com', 'SuperBoy2020');
-      router.push('/dashboard');
-    } catch (error) {
-      console.error('Admin login error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
@@ -120,30 +106,10 @@ export default function LoginPage() {
               </Link>
             </p>
           </div>
-
-          {/* Admin Quick Login */}
-          <div className="mt-6 p-4 bg-gradient-to-r from-orange-900/20 to-purple-900/20 border border-orange-500/30 rounded-lg">
-            <p className="text-sm text-gray-300 mb-3 text-center">
-              👑 <strong>Admin Access</strong>
-            </p>
-            <button
-              onClick={handleAdminLogin}
-              disabled={loading}
-              className="w-full px-4 py-2 bg-gradient-to-r from-orange-500 to-purple-500 text-white rounded-lg hover:from-orange-600 hover:to-purple-600 transition-all font-semibold disabled:opacity-50"
-            >
-              {loading ? 'Logging in...' : 'Quick Admin Login'}
-            </button>
-            <p className="text-xs text-gray-500 mt-2 text-center">
-              Email: leomyler0@gmail.com
-            </p>
-          </div>
         </div>
 
-        <div className="mt-6 text-center space-y-3">
-          <Link href="/auth-debug" className="block text-purple-500 hover:text-purple-400 text-sm">
-            🔧 Auth Debug Tools
-          </Link>
-          <Link href="/" className="block text-gray-500 hover:text-gray-400 text-sm">
+        <div className="mt-6 text-center">
+          <Link href="/" className="text-gray-500 hover:text-gray-400 text-sm">
             ← Back to Home
           </Link>
         </div>
