@@ -82,7 +82,7 @@ export default function FreeDashboard({ user, drawings, stats, onDelete }: FreeD
             <div className="text-center">
               <h3 className="text-xl font-bold mb-2">🎃 Free Tier Limitations</h3>
               <p className="text-gray-300 mb-4">
-                You're currently limited to 1 saved drawing. Upgrade to unlock more features!
+                You&apos;re currently limited to 1 saved drawing. Upgrade to unlock more features!
               </p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div className="flex items-center gap-2 justify-center">

@@ -188,7 +188,7 @@ export default function ProDashboard({ user, drawings, stats, onDelete }: ProDas
               <div className="text-center">
                 <h3 className="text-2xl font-bold mb-2">Approaching Storage Limit! 👑</h3>
                 <p className="text-gray-300 mb-4">
-                  You're getting close to 50 drawings. Upgrade to VIP for unlimited storage!
+                  You&apos;re getting close to 50 drawings. Upgrade to VIP for unlimited storage!
                 </p>
                 <Link href="/pricing">
                   <button className="spooky-btn">
