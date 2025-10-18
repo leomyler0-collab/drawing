@@ -27,18 +27,17 @@ export default function AuthDebugPage() {
 
   const resetAuth = () => {
     if (confirm('This will delete all users and sessions. Continue?')) {
-      localStorage.removeItem('spookysketch_users');
-      localStorage.removeItem('spookysketch_session');
-      alert('Auth reset! Refresh the page.');
-      window.location.reload();
+      clientAuth.clearAllAuthData();
+      clientAuth.initialize();
+      loadDebugInfo();
+      alert('Auth reset complete! Admin account recreated.');
     }
   };
 
   const reinitializeAdmin = () => {
-    localStorage.removeItem('spookysketch_users');
-    clientAuth.initialize();
+    clientAuth.recreateAdminAccount();
     loadDebugInfo();
-    alert('Admin account recreated!');
+    alert('Admin account recreated!\n\nEmail: leomyler0@gmail.com\nPassword: SuperBoy2020');
   };
 
   if (!mounted) {

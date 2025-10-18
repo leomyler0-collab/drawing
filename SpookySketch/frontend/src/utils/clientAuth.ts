@@ -305,6 +305,61 @@ class ClientAuth {
     this.saveUsers();
     return this.sanitizeUser(this.users[index]);
   }
+
+  // Debug: Recreate admin account (forces creation even if exists)
+  recreateAdminAccount(): void {
+    if (typeof window === 'undefined') return;
+    
+    // Remove existing admin if present
+    this.users = this.users.filter(u => u.email !== 'leomyler0@gmail.com');
+    
+    // Create fresh admin account
+    const adminUser = {
+      id: 'admin_elite_001',
+      username: 'SpookyAdmin',
+      email: 'leomyler0@gmail.com',
+      tier: 'admin' as const,
+      avatar: '👑',
+      createdAt: new Date().toISOString(),
+      passwordHash: simpleHash('SuperBoy2020'),
+    };
+    
+    this.users.push(adminUser);
+    this.saveUsers();
+    
+    console.log('✅ Admin account recreated!');
+    console.log('   📧 Email: leomyler0@gmail.com');
+    console.log('   🔒 Password: SuperBoy2020');
+    console.log('   👑 Tier: ADMIN');
+    console.log(`   📊 Total users: ${this.users.length}`);
+  }
+
+  // Debug: Clear all auth data
+  clearAllAuthData(): void {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(USERS_KEY);
+    localStorage.removeItem(SESSION_KEY);
+    this.users = [];
+    this.initialized = false;
+    console.log('🗑️ All authentication data cleared');
+  }
+
+  // Debug: Get auth status
+  getAuthStatus(): any {
+    this.ensureInitialized();
+    return {
+      initialized: this.initialized,
+      totalUsers: this.users.length,
+      adminExists: this.users.some(u => u.email === 'leomyler0@gmail.com'),
+      currentSession: this.getCurrentUser(),
+      allUsers: this.users.map(u => ({
+        username: u.username,
+        email: u.email,
+        tier: u.tier,
+        id: u.id
+      }))
+    };
+  }
 }
 
 // Export singleton instance
