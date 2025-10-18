@@ -30,13 +30,21 @@ const simpleHash = (text: string): string => {
 
 class ClientAuth {
   private users: StoredUser[] = [];
+  private initialized = false;
 
   constructor() {
+    // Don't initialize in constructor - wait for client-side access
+  }
+
+  private ensureInitialized() {
+    if (this.initialized || typeof window === 'undefined') return;
     this.loadUsers();
     this.initializeDefaultUser();
+    this.initialized = true;
   }
 
   private loadUsers() {
+    if (typeof window === 'undefined') return;
     try {
       const data = localStorage.getItem(USERS_KEY);
       this.users = data ? JSON.parse(data) : [];
@@ -46,6 +54,7 @@ class ClientAuth {
   }
 
   private saveUsers() {
+    if (typeof window === 'undefined') return;
     localStorage.setItem(USERS_KEY, JSON.stringify(this.users));
   }
 
@@ -70,6 +79,7 @@ class ClientAuth {
 
   // Signup - No backend needed!
   async signup(username: string, email: string, password: string): Promise<{ user: User; token: string }> {
+    this.ensureInitialized();
     // Validate input
     if (!username || username.length < 3) {
       throw new Error('Username must be at least 3 characters');
@@ -114,6 +124,7 @@ class ClientAuth {
 
   // Login - No backend needed!
   async login(email: string, password: string): Promise<{ user: User; token: string }> {
+    this.ensureInitialized();
     const user = this.users.find(u => u.email === email);
     
     if (!user) {
@@ -138,6 +149,8 @@ class ClientAuth {
 
   // Get current user from session
   getCurrentUser(): User | null {
+    this.ensureInitialized();
+    if (typeof window === 'undefined') return null;
     try {
       const session = localStorage.getItem(SESSION_KEY);
       if (!session) return null;
@@ -161,6 +174,7 @@ class ClientAuth {
 
   // Get current user ID from session
   getCurrentUserId(): string | null {
+    if (typeof window === 'undefined') return null;
     try {
       const session = localStorage.getItem(SESSION_KEY);
       if (!session) return null;
@@ -186,6 +200,7 @@ class ClientAuth {
 
   // Logout
   logout() {
+    if (typeof window === 'undefined') return;
     localStorage.removeItem(SESSION_KEY);
     console.log('✅ User logged out (client-side)');
   }
@@ -202,7 +217,9 @@ class ClientAuth {
       expires: expires.toISOString(),
     };
 
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    }
     return token;
   }
 
@@ -214,6 +231,8 @@ class ClientAuth {
 
   // Validate session token
   validateToken(token: string): User | null {
+    this.ensureInitialized();
+    if (typeof window === 'undefined') return null;
     try {
       const session = localStorage.getItem(SESSION_KEY);
       if (!session) return null;
@@ -235,11 +254,13 @@ class ClientAuth {
 
   // Get all users (admin only)
   getAllUsers(): User[] {
+    this.ensureInitialized();
     return this.users.map(u => this.sanitizeUser(u));
   }
 
   // Update user profile
   async updateProfile(userId: string, updates: Partial<User>): Promise<User> {
+    this.ensureInitialized();
     const index = this.users.findIndex(u => u.id === userId);
     if (index === -1) {
       throw new Error('User not found');
@@ -258,7 +279,10 @@ class ClientAuth {
 // Export singleton instance
 export const clientAuth = new ClientAuth();
 
-console.log('🔐 Client-Side Auth System Loaded');
-console.log('   ✅ No backend required');
-console.log('   ✅ Fully functional offline');
-console.log('   ✅ Professional grade');
+// Only log on client-side
+if (typeof window !== 'undefined') {
+  console.log('🔐 Client-Side Auth System Loaded');
+  console.log('   ✅ No backend required');
+  console.log('   ✅ Fully functional offline');
+  console.log('   ✅ Professional grade');
+}
