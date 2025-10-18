@@ -153,10 +153,10 @@ export default function AuthDebugPage() {
           <h3 className="font-bold text-orange-500 mb-2">📝 How to Use:</h3>
           <ol className="list-decimal list-inside space-y-1 text-sm text-gray-300">
             <li>Check if admin account exists above</li>
-            <li>If not, click "Recreate Admin"</li>
+            <li>If not, click &quot;Recreate Admin&quot;</li>
             <li>Open browser console (F12) for detailed logs</li>
             <li>Go to Login page and use admin credentials</li>
-            <li>If issues persist, click "Reset Everything"</li>
+            <li>If issues persist, click &quot;Reset Everything&quot;</li>
           </ol>
         </div>
       </div>

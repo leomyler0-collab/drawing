@@ -88,6 +88,7 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Auto-save draft every 30 seconds
@@ -132,6 +133,7 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
         }
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   useEffect(() => {
