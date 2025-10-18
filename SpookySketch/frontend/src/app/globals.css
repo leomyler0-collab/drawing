@@ -1,0 +1,162 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Creepster&family=Inter:wght@300;400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: radial-gradient(circle at center, #0D0D0F 0%, #000000 100%);
+  color: #F5F5F5;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0C0C0F;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #FF6B00;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #B660FF;
+}
+
+/* Spooky button styles */
+.spooky-btn {
+  @apply px-6 py-3 rounded-lg font-semibold transition-all duration-300;
+  @apply bg-gradient-to-r from-orange-600 to-orange-500;
+  @apply hover:from-orange-500 hover:to-orange-400;
+  @apply shadow-lg hover:shadow-orange-500/50;
+  position: relative;
+  overflow: hidden;
+}
+
+.spooky-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+.spooky-btn:hover::before {
+  left: 100%;
+}
+
+/* Ghost cursor trail */
+.ghost-cursor {
+  position: fixed;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 107, 0, 0.6), transparent);
+  pointer-events: none;
+  z-index: 9999;
+  animation: ghost-trail 0.8s ease-out forwards;
+}
+
+/* Floating animation */
+.float-animation {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Glow effect */
+.glow-orange {
+  box-shadow: 0 0 10px rgba(255, 107, 0, 0.5), 0 0 20px rgba(255, 107, 0, 0.3);
+}
+
+.glow-purple {
+  box-shadow: 0 0 10px rgba(182, 96, 255, 0.5), 0 0 20px rgba(182, 96, 255, 0.3);
+}
+
+/* Card styles */
+.spooky-card {
+  @apply bg-spooky-card border border-orange-500/20 rounded-xl p-6;
+  @apply transition-all duration-300 hover:border-orange-500/50;
+  backdrop-filter: blur(10px);
+}
+
+/* Input styles */
+.spooky-input {
+  @apply w-full px-4 py-3 bg-spooky-card border border-orange-500/30;
+  @apply rounded-lg text-spooky-ghost placeholder-gray-500;
+  @apply focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20;
+  @apply transition-all duration-300;
+}
+
+/* Canvas styles */
+canvas {
+  cursor: crosshair;
+  touch-action: none;
+}
+
+/* Loading spinner */
+.loading-spinner {
+  border: 3px solid rgba(255, 107, 0, 0.1);
+  border-top: 3px solid #FF6B00;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Fog effect */
+.fog {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 200px;
+  background: linear-gradient(to top, rgba(255, 107, 0, 0.1), transparent);
+  pointer-events: none;
+  z-index: 1;
+  animation: fog-move 20s ease-in-out infinite;
+}
+
+@keyframes fog-move {
+  0%, 100% { opacity: 0.3; transform: translateX(0); }
+  50% { opacity: 0.5; transform: translateX(50px); }
+}
+
+/* Pumpkin decorations */
+.pumpkin-decoration {
+  font-size: 3rem;
+  opacity: 0.1;
+  position: absolute;
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Modal overlay */
+.modal-overlay {
+  @apply fixed inset-0 bg-black/80 backdrop-blur-sm z-50;
+  @apply flex items-center justify-center p-4;
+}
+
+/* Tooltip */
+.tooltip {
+  @apply absolute bg-spooky-card border border-orange-500/50 rounded-lg p-2 text-sm;
+  @apply shadow-lg z-50 pointer-events-none;
+}
