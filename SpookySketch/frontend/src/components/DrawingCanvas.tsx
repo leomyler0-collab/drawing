@@ -1,7 +1,9 @@
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 import {
   Brush, Eraser, Circle, Square, Minus, Undo, Redo, Save,
   Download, Trash2, Palette, Layers, ZoomIn, ZoomOut, Ghost, Menu, X, Settings
@@ -46,6 +48,9 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
   const [isMobile, setIsMobile] = useState(false);
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
   const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [editingDrawingId, setEditingDrawingId] = useState<string | null>(null);
+  const searchParams = useSearchParams();
 
   // Halloween colors palette
   const halloweenColors = [
@@ -101,6 +106,33 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
 
     return () => clearInterval(interval);
   }, [autoSaveEnabled, history.length]);
+
+  // Load drawing for editing
+  useEffect(() => {
+    const editId = searchParams?.get('edit');
+    if (editId && canvasRef.current) {
+      const drawing = localDB.getDrawing(editId);
+      if (drawing) {
+        setEditingDrawingId(editId);
+        setDrawingTitle(drawing.title);
+        
+        // Load the drawing onto canvas
+        const canvas = canvasRef.current;
+        const ctx = canvas?.getContext('2d');
+        if (ctx && drawing.canvasData) {
+          const img = new Image();
+          img.onload = () => {
+            canvas.width = drawing.width;
+            canvas.height = drawing.height;
+            ctx.drawImage(img, 0, 0);
+            saveToHistory(ctx);
+            toast.success(`Loaded "${drawing.title}" for editing! ✏️`);
+          };
+          img.src = drawing.canvasData;
+        }
+      }
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -322,6 +354,32 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
       return;
     }
 
+    // Get current user ID and check tier limits
+    const currentUserId = clientAuth.getCurrentUserId();
+    const userDrawings = localDB.getAllDrawings().filter(d => d.userId === currentUserId);
+    
+    // Define tier limits
+    const tierLimits = {
+      free: 10,
+      pro: 50,
+      vip: Infinity,
+      admin: Infinity
+    };
+    
+    const userLimit = tierLimits[user.tier as keyof typeof tierLimits] || 10;
+    
+    // Check if editing existing drawing or creating new
+    const isEditing = editingDrawingId !== null;
+    const currentCount = isEditing ? userDrawings.length : userDrawings.length;
+    
+    // If not editing and would exceed limit, show upgrade modal
+    if (!isEditing && currentCount >= userLimit) {
+      setShowSaveModal(false);
+      setShowUpgradeModal(true);
+      toast.error(`Free tier limit reached! (${userLimit} drawings max)`);
+      return;
+    }
+
     try {
       // Create high-quality image
       const dataURL = canvas.toDataURL('image/png', 1.0);
@@ -336,24 +394,36 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
       }
       const thumbnailURL = thumbnailCanvas.toDataURL('image/png', 0.7);
       
-      // Get current user ID
-      const currentUserId = clientAuth.getCurrentUserId();
+      let savedDrawing;
       
-      // Save to localStorage
-      const savedDrawing = localDB.saveDrawing({
-        userId: currentUserId || undefined,
-        title: drawingTitle,
-        canvasData: dataURL,
-        thumbnail: thumbnailURL,
-        width: canvas.width,
-        height: canvas.height,
-        tags: ['spooky', 'halloween'],
-        isFavorite: false,
-        isPublic: false,
-      });
+      if (isEditing && editingDrawingId) {
+        // Update existing drawing
+        savedDrawing = localDB.updateDrawing(editingDrawingId, {
+          title: drawingTitle,
+          canvasData: dataURL,
+          thumbnail: thumbnailURL,
+          width: canvas.width,
+          height: canvas.height,
+        });
+        console.log('✅ Drawing updated:', editingDrawingId);
+        toast.success(`Updated "${drawingTitle}"! ✏️`);
+      } else {
+        // Save new drawing
+        savedDrawing = localDB.saveDrawing({
+          userId: currentUserId || undefined,
+          title: drawingTitle,
+          canvasData: dataURL,
+          thumbnail: thumbnailURL,
+          width: canvas.width,
+          height: canvas.height,
+          tags: ['spooky', 'halloween'],
+          isFavorite: false,
+          isPublic: false,
+        });
+        console.log('✅ Drawing saved:', savedDrawing.id);
+        toast.success(`Saved "${drawingTitle}"! 🎃`);
+      }
 
-      console.log('✅ Drawing saved:', savedDrawing.id);
-      toast.success(`Saved "${drawingTitle}"! 🎃`);
       setShowSaveModal(false);
       setDrawingTitle('');
       
@@ -676,6 +746,77 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
               >
                 Cancel
               </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Upgrade Modal - Tier Limit Reached */}
+      {showUpgradeModal && (
+        <div className="modal-overlay" onClick={() => setShowUpgradeModal(false)}>
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            onClick={(e) => e.stopPropagation()}
+            className={`spooky-card w-full ${
+              isMobile ? 'max-w-full mx-4' : 'max-w-lg'
+            }`}
+          >
+            <div className="text-center">
+              <div className="text-6xl mb-4">🔒</div>
+              <h2 className="text-2xl md:text-3xl font-bold mb-4 text-orange-500">
+                {user.tier === 'free' ? 'Free Tier Limit Reached!' : 'Tier Limit Reached!'}
+              </h2>
+              <p className="text-gray-300 mb-6">
+                {user.tier === 'free' 
+                  ? `You've reached your limit of 10 saved drawings on the Free tier.`
+                  : `You've reached your tier limit.`
+                }
+              </p>
+              
+              <div className="bg-spooky-bg p-4 rounded-lg mb-6">
+                <h3 className="font-bold text-orange-500 mb-3">Upgrade to unlock:</h3>
+                <ul className="text-left space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <span className="text-green-500">✅</span>
+                    <span><strong>Pro:</strong> Up to 50 drawings</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-green-500">✅</span>
+                    <span><strong>VIP:</strong> Unlimited drawings</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-green-500">✅</span>
+                    <span>Premium brushes & tools</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-green-500">✅</span>
+                    <span>Advanced layers & effects</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-green-500">✅</span>
+                    <span>Priority support</span>
+                  </li>
+                </ul>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link href="/pricing" className="flex-1">
+                  <button className="w-full spooky-btn">
+                    👑 View Plans & Upgrade
+                  </button>
+                </Link>
+                <button
+                  onClick={() => setShowUpgradeModal(false)}
+                  className="flex-1 px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition-all"
+                >
+                  Maybe Later
+                </button>
+              </div>
+              
+              <p className="text-xs text-gray-500 mt-4">
+                💡 Tip: Delete old drawings to make space for new ones
+              </p>
             </div>
           </motion.div>
         </div>
