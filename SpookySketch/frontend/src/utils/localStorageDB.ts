@@ -25,8 +25,16 @@ const DRAFTS_KEY = 'spookysketch_draft';
 const SETTINGS_KEY = 'spookysketch_settings';
 
 class LocalStorageDB {
+  // Check if we're in browser environment
+  private isBrowser(): boolean {
+    return typeof window !== 'undefined';
+  }
+
   // Save drawing (no token required!)
   saveDrawing(drawing: Omit<LocalDrawing, 'id' | 'createdAt' | 'updatedAt' | 'views' | 'likes'>): LocalDrawing {
+    if (!this.isBrowser()) {
+      throw new Error('LocalStorage is only available in browser');
+    }
     const drawings = this.getAllDrawings();
     
     const newDrawing: LocalDrawing = {
@@ -47,6 +55,7 @@ class LocalStorageDB {
 
   // Get all drawings
   getAllDrawings(): LocalDrawing[] {
+    if (!this.isBrowser()) return [];
     try {
       const data = localStorage.getItem(STORAGE_KEY);
       return data ? JSON.parse(data) : [];
@@ -269,4 +278,6 @@ class LocalStorageDB {
 export const localDB = new LocalStorageDB();
 
 // No tokens, no backend, pure client-side magic! ✨
-console.log('🎨 Local Storage DB initialized - No tokens required!');
+if (typeof window !== 'undefined') {
+  console.log('🎨 Local Storage DB initialized - No tokens required!');
+}

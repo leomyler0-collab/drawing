@@ -25,7 +25,7 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
   const [isDrawing, setIsDrawing] = useState(false);
   const [tool, setTool] = useState<Tool>('brush');
   const [color, setColor] = useState('#FF6B00');
-  const [brushSize, setBrushSize] = useState(5);
+  const [brushSize, setBrushSize] = useState(8);
   const [opacity, setOpacity] = useState(1);
   const [history, setHistory] = useState<ImageData[]>([]);
   const [historyStep, setHistoryStep] = useState(-1);
@@ -44,6 +44,8 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
   const [showToolbar, setShowToolbar] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
+  const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
 
   // Halloween colors palette
   const halloweenColors = [
@@ -73,6 +75,8 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
       if (mobile) {
         setShowToolbar(false);
         setShowSettings(false);
+        // Set better defaults for mobile
+        if (brushSize === 5) setBrushSize(10); // Larger brush for fingers
       }
     };
     
@@ -80,6 +84,23 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Auto-save draft every 30 seconds
+  useEffect(() => {
+    if (!autoSaveEnabled || !canvasRef.current) return;
+
+    const interval = setInterval(() => {
+      const canvas = canvasRef.current;
+      if (canvas && history.length > 1) {
+        const dataURL = canvas.toDataURL('image/png');
+        localDB.saveDraft(dataURL);
+        setLastAutoSave(new Date());
+        console.log('💾 Auto-saved draft');
+      }
+    }, 30000); // Every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [autoSaveEnabled, history.length]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -122,6 +143,7 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
 
   const startDrawing = (e: React.PointerEvent<HTMLCanvasElement>) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDrawing(true);
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -149,6 +171,12 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
     if (tool === 'ghost') {
       createGhostTrail(e.clientX, e.clientY);
     }
+
+    // Close mobile panels when starting to draw
+    if (isMobile) {
+      setShowToolbar(false);
+      setShowSettings(false);
+    }
   };
 
   const draw = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -168,6 +196,11 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
     // Get pressure from stylus (0.0 to 1.0)
     const currentPressure = e.pressure || 0.5;
     setPressure(currentPressure);
+    
+    // Palm rejection: ignore very wide touch areas (likely palm)
+    if (e.pointerType === 'touch' && e.width > 30 && e.height > 30) {
+      return; // Skip this touch event
+    }
     
     // Calculate pressure-sensitive size
     const pressureSize = usePressure && e.pointerType === 'pen' 
@@ -284,20 +317,34 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
     }
 
     const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const dataURL = canvas.toDataURL('image/png');
+    if (!canvas) {
+      toast.error('Canvas not found');
+      return;
+    }
 
     try {
-      // Get current user ID for user-specific storage
+      // Create high-quality image
+      const dataURL = canvas.toDataURL('image/png', 1.0);
+      
+      // Create thumbnail (smaller version)
+      const thumbnailCanvas = document.createElement('canvas');
+      thumbnailCanvas.width = 400;
+      thumbnailCanvas.height = (canvas.height / canvas.width) * 400;
+      const thumbnailCtx = thumbnailCanvas.getContext('2d');
+      if (thumbnailCtx) {
+        thumbnailCtx.drawImage(canvas, 0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
+      }
+      const thumbnailURL = thumbnailCanvas.toDataURL('image/png', 0.7);
+      
+      // Get current user ID
       const currentUserId = clientAuth.getCurrentUserId();
       
-      // Save to localStorage - NO TOKENS REQUIRED! 🎉
-      localDB.saveDrawing({
+      // Save to localStorage
+      const savedDrawing = localDB.saveDrawing({
         userId: currentUserId || undefined,
         title: drawingTitle,
         canvasData: dataURL,
-        thumbnail: dataURL,
+        thumbnail: thumbnailURL,
         width: canvas.width,
         height: canvas.height,
         tags: ['spooky', 'halloween'],
@@ -305,14 +352,17 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
         isPublic: false,
       });
 
-      toast.success('Drawing saved locally! 🎃 No tokens needed!');
+      console.log('✅ Drawing saved:', savedDrawing.id);
+      toast.success(`Saved "${drawingTitle}"! 🎃`);
       setShowSaveModal(false);
       setDrawingTitle('');
       
       // Clear draft after successful save
       localDB.clearDraft();
+      setLastAutoSave(null);
     } catch (error: any) {
-      toast.error('Failed to save drawing');
+      console.error('Save error:', error);
+      toast.error('Failed to save drawing. Check console for details.');
     }
   };
 
@@ -329,22 +379,33 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
 
   return (
     <div className="flex-1 flex flex-col md:flex-row relative">
-      {/* Mobile Menu Button */}
+      {/* Mobile Menu Buttons */}
       {isMobile && (
-        <div className="fixed top-16 left-4 z-50 flex gap-2">
+        <>
+          <div className="fixed top-16 left-4 z-50 flex gap-2">
+            <button
+              onClick={() => setShowToolbar(!showToolbar)}
+              className="w-12 h-12 rounded-full bg-orange-500 shadow-lg flex items-center justify-center text-white hover:bg-orange-600 transition-all"
+            >
+              {showToolbar ? <X size={20} /> : <Menu size={20} />}
+            </button>
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              className="w-12 h-12 rounded-full bg-purple-500 shadow-lg flex items-center justify-center text-white hover:bg-purple-600 transition-all"
+            >
+              <Settings size={20} />
+            </button>
+          </div>
+          
+          {/* Quick Save Button - Bottom Right */}
           <button
-            onClick={() => setShowToolbar(!showToolbar)}
-            className="w-12 h-12 rounded-full bg-orange-500 shadow-lg flex items-center justify-center text-white"
+            onClick={() => setShowSaveModal(true)}
+            className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-green-500 shadow-2xl flex items-center justify-center text-white hover:bg-green-600 transition-all hover:scale-110"
+            title="Quick Save"
           >
-            {showToolbar ? <X size={20} /> : <Menu size={20} />}
+            <Save size={24} />
           </button>
-          <button
-            onClick={() => setShowSettings(!showSettings)}
-            className="w-12 h-12 rounded-full bg-purple-500 shadow-lg flex items-center justify-center text-white"
-          >
-            <Settings size={20} />
-          </button>
-        </div>
+        </>
       )}
 
       {/* Toolbar */}
@@ -428,6 +489,14 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
                 </button>
               </div>
             )}
+            
+            {/* Auto-save indicator for mobile */}
+            {isMobile && lastAutoSave && (
+              <div className="mb-4 p-2 bg-green-900/20 border border-green-500/30 rounded text-xs text-green-400">
+                ✅ Auto-saved: {lastAutoSave.toLocaleTimeString()}
+              </div>
+            )}
+            
         <div>
           <h3 className="text-lg font-bold mb-3 text-orange-500">🎨 Color</h3>
           <div className="grid grid-cols-5 gap-2 mb-3">
@@ -452,6 +521,28 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
 
         <div>
           <h3 className="text-lg font-bold mb-3 text-orange-500">🖌️ Brush Size</h3>
+          {isMobile && (
+            <div className="flex gap-2 mb-3">
+              <button
+                onClick={() => setBrushSize(8)}
+                className={`flex-1 px-3 py-2 rounded ${brushSize === 8 ? 'bg-orange-500' : 'bg-gray-700'} text-xs`}
+              >
+                Small
+              </button>
+              <button
+                onClick={() => setBrushSize(15)}
+                className={`flex-1 px-3 py-2 rounded ${brushSize === 15 ? 'bg-orange-500' : 'bg-gray-700'} text-xs`}
+              >
+                Medium
+              </button>
+              <button
+                onClick={() => setBrushSize(25)}
+                className={`flex-1 px-3 py-2 rounded ${brushSize === 25 ? 'bg-orange-500' : 'bg-gray-700'} text-xs`}
+              >
+                Large
+              </button>
+            </div>
+          )}
           <input
             type="range"
             min="1"
@@ -542,23 +633,42 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
       {showSaveModal && (
         <div className="modal-overlay" onClick={() => setShowSaveModal(false)}>
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
+            initial={{ scale: 0.9, opacity: 0, y: isMobile ? 100 : 0 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
             onClick={(e) => e.stopPropagation()}
-            className="spooky-card max-w-md w-full"
+            className={`spooky-card w-full ${
+              isMobile ? 'max-w-full mx-4' : 'max-w-md'
+            }`}
           >
-            <h2 className="text-2xl font-bold mb-4 text-orange-500">💾 Save Drawing</h2>
+            <h2 className="text-xl md:text-2xl font-bold mb-4 text-orange-500">💾 Save Drawing</h2>
             <input
               type="text"
               value={drawingTitle}
               onChange={(e) => setDrawingTitle(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && drawingTitle.trim()) {
+                  saveDrawing();
+                }
+              }}
               placeholder="Enter drawing title..."
-              className="spooky-input mb-4"
+              className="spooky-input mb-4 text-base"
               autoFocus
             />
+            <div className="mb-4 text-sm text-gray-400">
+              <p>💡 Your drawing will be saved locally on this device</p>
+              {lastAutoSave && (
+                <p className="text-green-500 mt-1">
+                  ✅ Last auto-saved: {lastAutoSave.toLocaleTimeString()}
+                </p>
+              )}
+            </div>
             <div className="flex gap-3">
-              <button onClick={saveDrawing} className="flex-1 spooky-btn">
-                Save
+              <button 
+                onClick={saveDrawing} 
+                disabled={!drawingTitle.trim()}
+                className="flex-1 spooky-btn disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                💾 Save
               </button>
               <button
                 onClick={() => setShowSaveModal(false)}
