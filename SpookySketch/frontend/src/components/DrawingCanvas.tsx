@@ -1,10 +1,10 @@
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Brush, Eraser, Circle, Square, Minus, Undo, Redo, Save,
-  Download, Trash2, Palette, Layers, ZoomIn, ZoomOut, Ghost
+  Download, Trash2, Palette, Layers, ZoomIn, ZoomOut, Ghost, Menu, X, Settings
 } from 'lucide-react';
 import axios from 'axios';
 import Cookies from 'js-cookie';
@@ -41,6 +41,9 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
   const [pressure, setPressure] = useState(0.5);
   const [pointerType, setPointerType] = useState<'mouse' | 'pen' | 'touch'>('mouse');
   const [usePressure, setUsePressure] = useState(true);
+  const [showToolbar, setShowToolbar] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   // Halloween colors palette
   const halloweenColors = [
@@ -64,6 +67,21 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
   };
 
   useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile) {
+        setShowToolbar(false);
+        setShowSettings(false);
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -72,8 +90,20 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
 
     // Set responsive canvas size
     const updateCanvasSize = () => {
-      const width = Math.min(canvasSize.width, window.innerWidth - 360);
-      const height = Math.min(canvasSize.height, window.innerHeight - 100);
+      const isMobileView = window.innerWidth < 768;
+      let width, height;
+      
+      if (isMobileView) {
+        // Mobile: full viewport width minus minimal padding
+        width = window.innerWidth - 20;
+        height = window.innerHeight - 120; // Account for header + controls
+      } else {
+        // Desktop: account for sidebars
+        const sidebarWidth = 80 + 256; // toolbar + settings panel
+        width = Math.min(canvasSize.width, window.innerWidth - sidebarWidth - 40);
+        height = Math.min(canvasSize.height, window.innerHeight - 100);
+      }
+      
       canvas.width = width;
       canvas.height = height;
       
@@ -298,9 +328,39 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
   };
 
   return (
-    <div className="flex-1 flex">
+    <div className="flex-1 flex flex-col md:flex-row relative">
+      {/* Mobile Menu Button */}
+      {isMobile && (
+        <div className="fixed top-16 left-4 z-50 flex gap-2">
+          <button
+            onClick={() => setShowToolbar(!showToolbar)}
+            className="w-12 h-12 rounded-full bg-orange-500 shadow-lg flex items-center justify-center text-white"
+          >
+            {showToolbar ? <X size={20} /> : <Menu size={20} />}
+          </button>
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className="w-12 h-12 rounded-full bg-purple-500 shadow-lg flex items-center justify-center text-white"
+          >
+            <Settings size={20} />
+          </button>
+        </div>
+      )}
+
       {/* Toolbar */}
-      <div className="w-20 bg-spooky-card border-r border-orange-500/20 flex flex-col items-center py-4 gap-3">
+      <AnimatePresence>
+        {(showToolbar || !isMobile) && (
+          <motion.div
+            initial={isMobile ? { x: -100, opacity: 0 } : false}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -100, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className={`${
+              isMobile
+                ? 'fixed top-20 left-4 z-40 bg-spooky-card rounded-lg shadow-2xl border border-orange-500/30 p-2'
+                : 'w-20 border-r border-orange-500/20'
+            } bg-spooky-card flex ${isMobile ? 'flex-row flex-wrap max-w-[280px]' : 'flex-col'} items-center py-4 gap-3`}
+          >
         <ToolButton icon={<Brush />} active={tool === 'brush'} onClick={() => setTool('brush')} title="Brush" />
         <ToolButton icon={<Eraser />} active={tool === 'eraser'} onClick={() => setTool('eraser')} title="Eraser" />
         <ToolButton icon={<Ghost />} active={tool === 'ghost'} onClick={() => setTool('ghost')} title="Ghost Brush" />
@@ -316,23 +376,58 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
         
         <ToolButton icon={<Save />} onClick={() => setShowSaveModal(true)} title="Save Drawing" />
         <ToolButton icon={<Download />} onClick={downloadDrawing} title="Download" />
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Canvas */}
-      <div className="flex-1 overflow-auto flex items-center justify-center p-4">
+      <div className={`flex-1 overflow-auto flex items-center justify-center ${
+        isMobile ? 'p-2' : 'p-4'
+      }`}>
         <canvas
           ref={canvasRef}
           onPointerDown={startDrawing}
           onPointerMove={draw}
           onPointerUp={stopDrawing}
           onPointerLeave={stopDrawing}
-          className="border-2 border-orange-500/30 rounded-lg shadow-2xl glow-orange touch-none"
-          style={{ transform: `scale(${zoom})`, transformOrigin: 'center', touchAction: 'none' }}
+          onPointerCancel={stopDrawing}
+          className={`border-2 border-orange-500/30 rounded-lg shadow-2xl glow-orange touch-none ${
+            isMobile ? 'max-w-full' : ''
+          }`}
+          style={{
+            transform: `scale(${zoom})`,
+            transformOrigin: 'center',
+            touchAction: 'none',
+            cursor: tool === 'brush' ? 'crosshair' : tool === 'eraser' ? 'cell' : 'default',
+          }}
         />
       </div>
 
       {/* Settings Panel */}
-      <div className="w-64 bg-spooky-card border-l border-orange-500/20 p-4 space-y-6 overflow-y-auto">
+      <AnimatePresence>
+        {(showSettings || !isMobile) && (
+          <motion.div
+            initial={isMobile ? { y: '100%' } : false}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className={`${
+              isMobile
+                ? 'fixed bottom-0 left-0 right-0 z-40 max-h-[70vh] rounded-t-2xl'
+                : 'w-64 border-l'
+            } bg-spooky-card border-orange-500/20 p-4 space-y-6 overflow-y-auto`}
+          >
+            {isMobile && (
+              <div className="flex justify-between items-center mb-4 sticky top-0 bg-spooky-card pb-2 border-b border-orange-500/20">
+                <h2 className="text-lg font-bold text-orange-500">⚙️ Settings</h2>
+                <button
+                  onClick={() => setShowSettings(false)}
+                  className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center hover:bg-gray-600"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            )}
         <div>
           <h3 className="text-lg font-bold mb-3 text-orange-500">🎨 Color</h3>
           <div className="grid grid-cols-5 gap-2 mb-3">
@@ -439,7 +534,9 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
             </button>
           </div>
         )}
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Save Modal */}
       {showSaveModal && (
@@ -495,7 +592,7 @@ function ToolButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`w-14 h-14 rounded-lg flex items-center justify-center transition-all ${
+      className={`w-12 h-12 md:w-14 md:h-14 rounded-lg flex items-center justify-center transition-all text-sm md:text-base ${
         active
           ? 'bg-orange-500 text-white'
           : 'bg-spooky-bg text-gray-400 hover:bg-orange-500/20 hover:text-orange-500'

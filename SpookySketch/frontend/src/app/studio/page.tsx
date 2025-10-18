@@ -41,28 +41,33 @@ export default function StudioPage() {
   return (
     <div className="h-screen flex flex-col bg-spooky-bg overflow-hidden">
       {/* Header */}
-      <header className="bg-spooky-card border-b border-orange-500/20 px-4 py-2 flex items-center justify-between h-12">
-        <div className="flex items-center gap-3">
+      <header className="bg-spooky-card border-b border-orange-500/20 px-2 md:px-4 py-2 flex items-center justify-between h-14 md:h-12 flex-shrink-0">
+        <div className="flex items-center gap-2 md:gap-3">
           <motion.span
             animate={{ rotate: [0, -10, 10, -10, 0] }}
             transition={{ duration: 2, repeat: Infinity }}
-            className="text-2xl"
+            className="text-xl md:text-2xl"
           >
             🎃
           </motion.span>
-          <h1 className="text-xl font-bold text-orange-500">SpookySketch Studio</h1>
-          <span className="text-xs text-gray-500 hidden md:inline">Ctrl+S to save | Ctrl+Z to undo</span>
+          <h1 className="text-base md:text-xl font-bold text-orange-500 truncate">
+            SpookySketch
+            <span className="hidden sm:inline"> Studio</span>
+          </h1>
+          <span className="text-xs text-gray-500 hidden lg:inline">Ctrl+S to save | Ctrl+Z to undo</span>
         </div>
         
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-400">
-            {user.username} | <span className="text-orange-500 font-semibold">{user.tier.toUpperCase()}</span>
+        <div className="flex items-center gap-2 md:gap-3">
+          <span className="text-xs md:text-sm text-gray-400 hidden sm:inline">
+            <span className="hidden md:inline">{user.username} | </span>
+            <span className="text-orange-500 font-semibold">{user.tier.toUpperCase()}</span>
           </span>
           <button
             onClick={() => router.push('/dashboard')}
-            className="px-4 py-2 rounded-lg border border-orange-500 text-orange-500 hover:bg-orange-500/10 transition-all text-sm"
+            className="px-2 md:px-4 py-1.5 md:py-2 rounded-lg border border-orange-500 text-orange-500 hover:bg-orange-500/10 transition-all text-xs md:text-sm"
           >
-            Dashboard
+            <span className="hidden sm:inline">Dashboard</span>
+            <span className="sm:hidden">📊</span>
           </button>
         </div>
       </header>
