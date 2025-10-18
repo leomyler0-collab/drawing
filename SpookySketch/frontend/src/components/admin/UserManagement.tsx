@@ -20,6 +20,8 @@ export default function UserManagement({ onClose }: UserManagementProps) {
   const [filterTier, setFilterTier] = useState<string>('all');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showUserDetails, setShowUserDetails] = useState(false);
+  const [showEditTier, setShowEditTier] = useState(false);
+  const [newTier, setNewTier] = useState<'free' | 'pro' | 'vip' | 'admin'>('free');
 
   useEffect(() => {
     loadUsers();
@@ -57,22 +59,56 @@ export default function UserManagement({ onClose }: UserManagementProps) {
     return badges[tier as keyof typeof badges] || badges.free;
   };
 
-  const handleDeleteUser = (userId: string) => {
+  const handleDeleteUser = (userId: string, username: string) => {
     if (userId === 'admin_elite_001') {
       toast.error('Cannot delete the primary admin account!');
       return;
     }
     
-    if (confirm('Are you sure you want to delete this user?')) {
-      // In a real app, this would call an API
-      toast.success('User deleted successfully');
-      loadUsers();
+    if (confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
+      try {
+        // Delete user from localStorage
+        const storedUsers = JSON.parse(localStorage.getItem('spookysketch_users') || '[]');
+        const updatedUsers = storedUsers.filter((u: any) => u.id !== userId);
+        localStorage.setItem('spookysketch_users', JSON.stringify(updatedUsers));
+        
+        toast.success(`User "${username}" deleted successfully!`);
+        loadUsers();
+      } catch (error) {
+        console.error('Delete error:', error);
+        toast.error('Failed to delete user');
+      }
     }
   };
 
   const handleViewDetails = (user: User) => {
     setSelectedUser(user);
     setShowUserDetails(true);
+  };
+
+  const handleEditTier = (user: User) => {
+    setSelectedUser(user);
+    setNewTier(user.tier);
+    setShowEditTier(true);
+  };
+
+  const handleUpdateTier = async () => {
+    if (!selectedUser) return;
+    
+    if (selectedUser.id === 'admin_elite_001' && newTier !== 'admin') {
+      toast.error('Cannot change the primary admin tier!');
+      return;
+    }
+
+    try {
+      await clientAuth.updateProfile(selectedUser.id, { tier: newTier });
+      toast.success(`Updated ${selectedUser.username} to ${newTier.toUpperCase()} tier!`);
+      setShowEditTier(false);
+      loadUsers();
+    } catch (error) {
+      console.error('Update error:', error);
+      toast.error('Failed to update user tier');
+    }
   };
 
   const stats = {
@@ -207,14 +243,21 @@ export default function UserManagement({ onClose }: UserManagementProps) {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleViewDetails(user)}
-                      className="px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors text-sm"
+                      className="px-3 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors text-sm"
                     >
-                      View Details
+                      View
+                    </button>
+                    <button
+                      onClick={() => handleEditTier(user)}
+                      className="px-3 py-2 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors text-sm"
+                    >
+                      Edit Tier
                     </button>
                     {user.id !== 'admin_elite_001' && (
                       <button
-                        onClick={() => handleDeleteUser(user.id)}
+                        onClick={() => handleDeleteUser(user.id, user.username)}
                         className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
+                        title="Delete user"
                       >
                         <Trash2 size={18} />
                       </button>
@@ -233,8 +276,113 @@ export default function UserManagement({ onClose }: UserManagementProps) {
           </div>
         </div>
 
-        {/* User Details Modal */}
+        {/* Edit Tier Modal */}
         <AnimatePresence>
+          {showEditTier && selectedUser && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-6"
+              onClick={() => setShowEditTier(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-spooky-card border-2 border-purple-500/50 rounded-xl max-w-md w-full p-6"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold text-purple-500">Edit User Tier</h3>
+                  <button
+                    onClick={() => setShowEditTier(false)}
+                    className="p-2 hover:bg-purple-500/20 rounded-lg transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-3 bg-spooky-bg rounded-lg border border-gray-500/20">
+                    <div className="text-3xl">{selectedUser.avatar}</div>
+                    <div>
+                      <div className="font-bold">{selectedUser.username}</div>
+                      <div className="text-sm text-gray-400">{selectedUser.email}</div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-300">
+                      Select New Tier
+                    </label>
+                    <div className="space-y-2">
+                      {(['free', 'pro', 'vip', 'admin'] as const).map((tier) => (
+                        <label
+                          key={tier}
+                          className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                            newTier === tier
+                              ? 'border-purple-500 bg-purple-500/20'
+                              : 'border-gray-500/20 bg-spooky-bg hover:border-purple-500/50'
+                          } ${
+                            selectedUser.id === 'admin_elite_001' && tier !== 'admin'
+                              ? 'opacity-50 cursor-not-allowed'
+                              : ''
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="tier"
+                            value={tier}
+                            checked={newTier === tier}
+                            onChange={(e) => setNewTier(e.target.value as typeof newTier)}
+                            disabled={selectedUser.id === 'admin_elite_001' && tier !== 'admin'}
+                            className="text-purple-500"
+                          />
+                          <div className="flex items-center gap-2 flex-1">
+                            {getTierIcon(tier)}
+                            <span className="font-semibold">{tier.toUpperCase()}</span>
+                          </div>
+                          {tier === 'free' && <span className="text-xs text-gray-400">10 drawings</span>}
+                          {tier === 'pro' && <span className="text-xs text-gray-400">50 drawings</span>}
+                          {tier === 'vip' && <span className="text-xs text-gray-400">Unlimited</span>}
+                          {tier === 'admin' && <span className="text-xs text-gray-400">Full access</span>}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {selectedUser.id === 'admin_elite_001' && (
+                    <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="text-orange-400 mt-0.5" size={16} />
+                        <p className="text-xs text-orange-400">
+                          Primary admin account tier cannot be changed.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleUpdateTier}
+                      className="flex-1 px-4 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-semibold"
+                    >
+                      Update Tier
+                    </button>
+                    <button
+                      onClick={() => setShowEditTier(false)}
+                      className="px-4 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+
+          {/* User Details Modal */}
           {showUserDetails && selectedUser && (
             <motion.div
               initial={{ opacity: 0 }}
@@ -308,6 +456,29 @@ export default function UserManagement({ onClose }: UserManagementProps) {
                         </div>
                       </div>
                     </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        setShowUserDetails(false);
+                        handleEditTier(selectedUser);
+                      }}
+                      className="flex-1 px-4 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-semibold"
+                    >
+                      Edit Tier
+                    </button>
+                    {selectedUser.id !== 'admin_elite_001' && (
+                      <button
+                        onClick={() => {
+                          setShowUserDetails(false);
+                          handleDeleteUser(selectedUser.id, selectedUser.username);
+                        }}
+                        className="px-4 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-semibold"
+                      >
+                        Delete User
+                      </button>
+                    )}
                   </div>
                 </div>
               </motion.div>
