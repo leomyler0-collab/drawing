@@ -33,99 +33,76 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Initialize client auth system (including admin account)
+    if (typeof window !== 'undefined') {
+      clientAuth.initialize();
+    }
     checkAuth();
   }, []);
 
   const checkAuth = async () => {
+    // Always check client-side auth first (works offline)
+    const clientUser = clientAuth.getCurrentUser();
+    
+    if (clientUser) {
+      // User has valid client-side session
+      setUser(clientUser);
+      useClientAuth = true;
+      setLoading(false);
+      console.log('✅ Restored session for:', clientUser.username);
+      return;
+    }
+    
+    // If no client-side session, check cookie for backend auth
     const token = Cookies.get('token');
     if (token) {
       try {
-        // Try backend first
+        // Try backend
         const response = await axios.get(`${API_URL}/api/auth/me`, {
           headers: { Authorization: `Bearer ${token}` },
-          timeout: 3000, // 3 second timeout
+          timeout: 3000,
         });
         setUser(response.data.user);
         useClientAuth = false;
       } catch (error) {
-        // Gracefully fallback to client-side auth
-        console.log('⚡ Backend unavailable, using client-side auth');
-        useClientAuth = true;
-        const clientUser = clientAuth.getCurrentUser();
-        if (clientUser) {
-          setUser(clientUser);
-        } else {
-          Cookies.remove('token');
-        }
-      }
-    } else {
-      // Check client-side session
-      const clientUser = clientAuth.getCurrentUser();
-      if (clientUser) {
-        setUser(clientUser);
-        useClientAuth = true;
+        // Backend unavailable, clear invalid token
+        console.log('⚡ Backend unavailable');
+        Cookies.remove('token');
       }
     }
+    
     setLoading(false);
   };
 
   const login = async (email: string, password: string) => {
     try {
-      // Try backend first
-      const response = await axios.post(
-        `${API_URL}/api/auth/login`,
-        { email, password },
-        { timeout: 3000 }
-      );
-      const { token, user: userData } = response.data;
+      // Use client-side auth (no backend required)
+      console.log('🔐 Logging in:', email);
+      const { token, user: userData } = await clientAuth.login(email, password);
       Cookies.set('token', token, { expires: 30 });
       setUser(userData);
-      useClientAuth = false;
-      toast.success('Welcome back! 🎃');
+      useClientAuth = true;
+      toast.success(`Welcome back, ${userData.username}! 🎃`);
     } catch (error: any) {
-      // Gracefully fallback to client-side auth
-      try {
-        console.log('⚡ Backend unavailable, using client-side auth');
-        const { token, user: userData } = await clientAuth.login(email, password);
-        Cookies.set('token', token, { expires: 30 });
-        setUser(userData);
-        useClientAuth = true;
-        toast.success('Welcome back! 🎃 (Offline Mode)');
-      } catch (clientError: any) {
-        console.error('Login error:', error);
-        toast.error(clientError.message || 'Login failed');
-        throw clientError;
-      }
+      console.error('Login error:', error);
+      toast.error(error.message || 'Login failed. Check your email and password.');
+      throw error;
     }
   };
 
   const signup = async (username: string, email: string, password: string) => {
     try {
-      // Try backend first
-      const response = await axios.post(
-        `${API_URL}/api/auth/signup`,
-        { username, email, password },
-        { timeout: 3000 }
-      );
-      const { token, user: userData } = response.data;
+      // Use client-side auth (no backend required)
+      console.log('📝 Creating account:', username, email);
+      const { token, user: userData } = await clientAuth.signup(username, email, password);
       Cookies.set('token', token, { expires: 30 });
       setUser(userData);
-      useClientAuth = false;
-      toast.success('Account created! 🎃');
+      useClientAuth = true;
+      toast.success(`Account created, ${userData.username}! 🎃`);
     } catch (error: any) {
-      // Gracefully fallback to client-side auth
-      try {
-        console.log('⚡ Backend unavailable, using client-side auth');
-        const { token, user: userData } = await clientAuth.signup(username, email, password);
-        Cookies.set('token', token, { expires: 30 });
-        setUser(userData);
-        useClientAuth = true;
-        toast.success('Account created! 🎃 (Offline Mode)');
-      } catch (clientError: any) {
-        console.error('Signup error:', error);
-        toast.error(clientError.message || 'Signup failed');
-        throw clientError;
-      }
+      console.error('Signup error:', error);
+      toast.error(error.message || 'Signup failed. Try a different email or username.');
+      throw error;
     }
   };
 

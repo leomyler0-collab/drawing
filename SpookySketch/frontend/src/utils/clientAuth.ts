@@ -36,6 +36,12 @@ class ClientAuth {
     // Don't initialize in constructor - wait for client-side access
   }
 
+  // Public method to explicitly initialize (called from AuthProvider)
+  public initialize() {
+    if (typeof window === 'undefined') return;
+    this.ensureInitialized();
+  }
+
   private ensureInitialized() {
     if (this.initialized || typeof window === 'undefined') return;
     this.loadUsers();
@@ -63,18 +69,27 @@ class ClientAuth {
     const adminExists = this.users.some(u => u.email === 'leomyler0@gmail.com');
     
     if (!adminExists) {
-      this.users.push({
+      const adminUser = {
         id: 'admin_elite_001',
         username: 'SpookyAdmin',
         email: 'leomyler0@gmail.com',
-        tier: 'admin', // Admin gets ALL access (VIP + Pro included)
+        tier: 'admin' as const,
         avatar: '👑',
         createdAt: new Date().toISOString(),
         passwordHash: simpleHash('SuperBoy2020'),
-      });
+      };
+      this.users.push(adminUser);
       this.saveUsers();
-      console.log('✅ Default admin user created (VIP + Pro access)');
+      console.log('✅ Admin account created!');
+      console.log('   📧 Email: leomyler0@gmail.com');
+      console.log('   🔒 Password: SuperBoy2020');
+      console.log('   👑 Tier: ADMIN');
+    } else {
+      console.log('✅ Admin account already exists');
+      console.log('   📧 Email: leomyler0@gmail.com');
+      console.log('   🔒 Password: SuperBoy2020');
     }
+    console.log(`📊 Total users in database: ${this.users.length}`);
   }
 
   // Signup - No backend needed!
@@ -125,21 +140,37 @@ class ClientAuth {
   // Login - No backend needed!
   async login(email: string, password: string): Promise<{ user: User; token: string }> {
     this.ensureInitialized();
+    
+    console.log('🔐 Login attempt:', email);
+    console.log(`📊 Checking against ${this.users.length} users`);
+    
     const user = this.users.find(u => u.email === email);
     
     if (!user) {
+      console.log('❌ User not found:', email);
+      console.log('💡 Available emails:', this.users.map(u => u.email).join(', '));
       throw new Error('Invalid email or password');
     }
 
     const passwordHash = simpleHash(password);
+    console.log('🔑 Password hash check:', { 
+      provided: passwordHash.substring(0, 8) + '...',
+      stored: user.passwordHash.substring(0, 8) + '...',
+      match: passwordHash === user.passwordHash 
+    });
+    
     if (user.passwordHash !== passwordHash) {
+      console.log('❌ Password mismatch for:', email);
       throw new Error('Invalid email or password');
     }
 
     // Create session
     const token = this.createSession(user);
 
-    console.log('✅ User logged in (client-side):', user.username);
+    console.log('✅ Login successful!');
+    console.log(`   👤 User: ${user.username}`);
+    console.log(`   👑 Tier: ${user.tier.toUpperCase()}`);
+    console.log(`   🔑 Token created`);
 
     return {
       user: this.sanitizeUser(user),
