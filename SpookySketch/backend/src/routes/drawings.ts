@@ -433,21 +433,27 @@ router.patch('/:id/visibility', authenticate, async (req: AuthRequest, res: Resp
     }
 
     if (isMongoConnected()) {
-      const drawing = await Drawing.findOneAndUpdate(
-        { _id: id, userId },
-        { isPublic },
-        { new: true }
-      );
-
-      if (!drawing) {
+      // First find the drawing to verify ownership
+      const existingDrawing = await Drawing.findById(id);
+      
+      if (!existingDrawing) {
         return res.status(404).json({ error: 'Drawing not found' });
       }
+
+      // Check if user owns the drawing (convert both to strings for comparison)
+      if (existingDrawing.userId.toString() !== userId.toString()) {
+        return res.status(403).json({ error: 'You do not have permission to modify this drawing' });
+      }
+
+      // Update the drawing
+      existingDrawing.isPublic = isPublic;
+      await existingDrawing.save();
 
       res.json({
         message: `Drawing is now ${isPublic ? 'public' : 'private'}`,
         drawing: {
-          _id: drawing._id,
-          isPublic: drawing.isPublic,
+          _id: existingDrawing._id,
+          isPublic: existingDrawing.isPublic,
         },
       });
     } else {

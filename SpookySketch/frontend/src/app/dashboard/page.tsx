@@ -24,6 +24,7 @@ interface Drawing {
   views: number;
   createdAt: string;
   updatedAt?: string;
+  isPublic?: boolean;
 }
 
 interface Stats {
@@ -88,6 +89,7 @@ export default function DashboardPage() {
         views: d.views,
         createdAt: d.createdAt,
         updatedAt: d.updatedAt,
+        isPublic: d.isPublic || false,
       }));
       
       // Calculate stats for current user only
@@ -156,6 +158,7 @@ export default function DashboardPage() {
     drawings,
     stats,
     onDelete: deleteDrawing,
+    onUpdate: fetchData,
   };
 
   switch (user.tier) {
