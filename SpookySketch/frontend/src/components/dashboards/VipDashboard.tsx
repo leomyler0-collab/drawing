@@ -11,28 +11,10 @@ import {
 import Navbar from '@/components/Navbar';
 import { drawingAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
+import { User, Drawing, Stats, DashboardProps } from '@/types';
 
-interface Drawing {
-  _id?: string;
-  id?: string;
-  title: string;
-  thumbnail: string;
-  likes: number;
-  views: number;
-  createdAt: string;
-  updatedAt?: string;
-  isPublic?: boolean;
-}
-
-interface Stats {
-  drawingCount: number;
-  publicDrawings: number;
-  totalLikes: number;
-  totalViews: number;
-}
-
-interface VipDashboardProps {
-  user: any;
+interface VipDashboardProps extends DashboardProps {
+  user: User;
   drawings: Drawing[];
   stats: Stats | null;
   onDelete: (id: string) => void;

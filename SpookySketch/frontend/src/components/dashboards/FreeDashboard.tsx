@@ -7,32 +7,10 @@ import { Palette, Crown, Trash2, Edit, Eye, Calendar, TrendingUp, Lock, Globe, L
 import Navbar from '@/components/Navbar';
 import { drawingAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
+import { User, Drawing, Stats, DashboardProps } from '@/types';
 
-interface Drawing {
-  _id?: string;
-  id?: string;
-  title: string;
-  thumbnail: string;
-  likes: number;
-  views: number;
-  createdAt: string;
-  updatedAt?: string;
-  isPublic?: boolean;
-}
-
-interface Stats {
-  drawingCount: number;
-  publicDrawings: number;
-  totalLikes: number;
-  totalViews: number;
-}
-
-interface FreeDashboardProps {
-  user: any;
-  drawings: Drawing[];
-  stats: Stats | null;
-  onDelete: (id: string) => void;
-  onUpdate?: () => void;
+interface FreeDashboardProps extends DashboardProps {
+  user: User;
 }
 
 export default function FreeDashboard({ user, drawings, stats, onDelete, onUpdate }: FreeDashboardProps) {

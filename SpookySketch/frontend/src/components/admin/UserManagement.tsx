@@ -9,16 +9,8 @@ import {
 } from 'lucide-react';
 import { adminAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
-
-interface User {
-  id: string;
-  username: string;
-  email: string;
-  tier: 'free' | 'pro' | 'vip' | 'admin';
-  avatar: string;
-  createdAt: string;
-  updatedAt?: string;
-}
+import { User } from '@/types';
+import { clientAuth } from '@/utils/clientAuth';
 
 interface UserManagementProps {
   onClose: () => void;
@@ -39,11 +31,16 @@ export default function UserManagement({ onClose }: UserManagementProps) {
 
   const loadUsers = async () => {
     try {
+      // Try backend first
       const response = await adminAPI.getAllUsers();
       setUsers(response.data.users);
-    } catch (error: any) {
-      console.error('Failed to load users:', error);
-      toast.error(error.response?.data?.error || 'Failed to load users');
+      console.log('✅ Users loaded from backend');
+    } catch (error) {
+      // Fallback to localStorage (works in production without backend)
+      console.log('⚡ Using localStorage for users (production mode)');
+      const localUsers = clientAuth.getAllUsers();
+      setUsers(localUsers);
+      console.log(`✅ Loaded ${localUsers.length} users from localStorage`);
     }
   };
 
@@ -77,12 +74,14 @@ export default function UserManagement({ onClose }: UserManagementProps) {
   const handleDeleteUser = async (userId: string, username: string) => {
     if (confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
       try {
+        // Try backend first
         await adminAPI.deleteUser(userId);
         toast.success(`User "${username}" deleted successfully!`);
         loadUsers();
-      } catch (error: any) {
-        console.error('Delete error:', error);
-        toast.error(error.response?.data?.error || 'Failed to delete user');
+      } catch (error) {
+        // Note: User deletion from localStorage requires backend or manual implementation
+        console.warn('Cannot delete users in localStorage-only mode');
+        toast.error('User deletion requires backend connection');
       }
     }
   };
@@ -102,13 +101,23 @@ export default function UserManagement({ onClose }: UserManagementProps) {
     if (!selectedUser) return;
 
     try {
+      // Try backend first
       await adminAPI.updateUserTier(selectedUser.id, newTier);
       toast.success(`Updated ${selectedUser.username} to ${newTier.toUpperCase()} tier!`);
       setShowEditTier(false);
       loadUsers();
-    } catch (error: any) {
-      console.error('Update error:', error);
-      toast.error(error.response?.data?.error || 'Failed to update user tier');
+    } catch (error) {
+      // Fallback to localStorage update
+      console.log('⚡ Updating user tier in localStorage');
+      try {
+        await clientAuth.updateProfile(selectedUser.id, { tier: newTier });
+        toast.success(`Updated ${selectedUser.username} to ${newTier.toUpperCase()} tier!`);
+        setShowEditTier(false);
+        loadUsers();
+      } catch (localError) {
+        console.error('Update error:', localError);
+        toast.error('Failed to update user tier');
+      }
     }
   };
 
@@ -235,7 +244,7 @@ export default function UserManagement({ onClose }: UserManagementProps) {
                         </span>
                         <span className="flex items-center gap-1">
                           <Calendar size={14} />
-                          {new Date(user.createdAt).toLocaleDateString()}
+                          {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                         </span>
                       </div>
                     </div>
@@ -432,7 +441,7 @@ export default function UserManagement({ onClose }: UserManagementProps) {
                     </div>
                     <div className="bg-spooky-bg p-4 rounded-lg border border-gray-500/20">
                       <div className="text-sm text-gray-400 mb-1">Created At</div>
-                      <div className="text-sm">{new Date(selectedUser.createdAt).toLocaleString()}</div>
+                      <div className="text-sm">{selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleString() : 'N/A'}</div>
                     </div>
                     <div className="bg-spooky-bg p-4 rounded-lg border border-gray-500/20">
                       <div className="text-sm text-gray-400 mb-1">Status</div>
@@ -449,7 +458,7 @@ export default function UserManagement({ onClose }: UserManagementProps) {
                       <div>
                         <div className="font-semibold text-blue-400 mb-1">Account Information</div>
                         <div className="text-sm text-gray-300">
-                          This user has been registered since {new Date(selectedUser.createdAt).toLocaleDateString()}.
+                          This user has been registered since {selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString() : 'N/A'}.
                           {selectedUser.tier === 'admin' && ' This is an administrator account with full system access.'}
                           {selectedUser.tier === 'vip' && ' This user has VIP privileges with unlimited access.'}
                           {selectedUser.tier === 'pro' && ' This user has Pro features enabled.'}

@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { adminAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
+import { AppSettings } from '@/types';
 
 interface SettingsProps {
   onClose: () => void;
@@ -45,9 +46,10 @@ export default function Settings({ onClose }: SettingsProps) {
       const response = await adminAPI.getSettings();
       setSettings(response.data.settings);
       setLoading(false);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to load settings:', error);
-      toast.error('Failed to load settings');
+      const message = error instanceof Error ? error.message : 'Failed to load settings';
+      toast.error(message);
       setLoading(false);
     }
   };
@@ -58,9 +60,10 @@ export default function Settings({ onClose }: SettingsProps) {
       setShowSuccess(true);
       toast.success('Settings saved successfully!');
       setTimeout(() => setShowSuccess(false), 3000);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to save settings:', error);
-      toast.error(error.response?.data?.error || 'Failed to save settings');
+      const message = error instanceof Error ? error.message : 'Failed to save settings';
+      toast.error(message);
     }
   };
 
@@ -117,7 +120,7 @@ export default function Settings({ onClose }: SettingsProps) {
             {tabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id as 'general' | 'security' | 'system')}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
                   activeTab === tab.id
                     ? 'bg-purple-500/30 text-purple-400 border border-purple-500/50'

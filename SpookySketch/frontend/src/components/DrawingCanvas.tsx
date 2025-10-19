@@ -13,14 +13,13 @@ import Cookies from 'js-cookie';
 import toast from 'react-hot-toast';
 import { localDB } from '@/utils/localStorageDB';
 import { clientAuth } from '@/utils/clientAuth';
+import { User, Tool } from '@/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 interface DrawingCanvasProps {
-  user: any;
+  user: User;
 }
-
-type Tool = 'brush' | 'eraser' | 'line' | 'circle' | 'rectangle' | 'ghost' | 'pumpkin' | 'fill' | 'eyedropper' | 'spray';
 
 export default function DrawingCanvas({ user }: DrawingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -432,9 +431,10 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
       // Clear draft after successful save
       localDB.clearDraft();
       setLastAutoSave(null);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Save error:', error);
-      toast.error('Failed to save drawing. Check console for details.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save drawing';
+      toast.error(errorMessage);
     }
   };
 

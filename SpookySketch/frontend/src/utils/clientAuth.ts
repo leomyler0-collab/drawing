@@ -80,16 +80,7 @@ class ClientAuth {
       };
       this.users.push(adminUser);
       this.saveUsers();
-      console.log('✅ Admin account created!');
-      console.log('   📧 Email: leomyler0@gmail.com');
-      console.log('   🔒 Password: SuperBoy2020');
-      console.log('   👑 Tier: ADMIN');
-    } else {
-      console.log('✅ Admin account already exists');
-      console.log('   📧 Email: leomyler0@gmail.com');
-      console.log('   🔒 Password: SuperBoy2020');
     }
-    console.log(`📊 Total users in database: ${this.users.length}`);
   }
 
   // Signup - No backend needed!

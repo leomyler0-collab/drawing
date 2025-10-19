@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Ghost } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -16,13 +17,21 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email || !password) {
+      toast.error('Please enter both email and password');
+      return;
+    }
+    
     setLoading(true);
 
     try {
       await login(email, password);
       router.push('/dashboard');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
+      // Error already handled in AuthContext with toast
+      // No need to show another error here
     } finally {
       setLoading(false);
     }

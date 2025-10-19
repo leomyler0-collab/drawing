@@ -77,15 +77,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email: string, password: string) => {
     try {
       // Use client-side auth (no backend required)
-      console.log('🔐 Logging in:', email);
       const { token, user: userData } = await clientAuth.login(email, password);
       Cookies.set('token', token, { expires: 30 });
       setUser(userData);
       useClientAuth = true;
       toast.success(`Welcome back, ${userData.username}! 🎃`);
     } catch (error: any) {
-      console.error('Login error:', error);
-      toast.error(error.message || 'Login failed. Check your email and password.');
+      const errorMessage = error?.message || 'Login failed. Please check your credentials.';
+      toast.error(errorMessage);
       throw error;
     }
   };
@@ -93,15 +92,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signup = async (username: string, email: string, password: string) => {
     try {
       // Use client-side auth (no backend required)
-      console.log('📝 Creating account:', username, email);
       const { token, user: userData } = await clientAuth.signup(username, email, password);
       Cookies.set('token', token, { expires: 30 });
       setUser(userData);
       useClientAuth = true;
-      toast.success(`Account created, ${userData.username}! 🎃`);
+      toast.success(`Account created! Welcome, ${userData.username}! 🎃`);
     } catch (error: any) {
-      console.error('Signup error:', error);
-      toast.error(error.message || 'Signup failed. Try a different email or username.');
+      const errorMessage = error?.message || 'Signup failed. Please try again.';
+      toast.error(errorMessage);
       throw error;
     }
   };

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { User, Mail, Lock, Sparkles } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function SignupPage() {
   const [username, setUsername] = useState('');
@@ -17,13 +18,31 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate inputs
+    if (!username || username.length < 3) {
+      toast.error('Username must be at least 3 characters');
+      return;
+    }
+    
+    if (!email || !email.includes('@')) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+    
+    if (!password || password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+    
     setLoading(true);
 
     try {
       await signup(username, email, password);
       router.push('/dashboard');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Signup error:', error);
+      // Error already handled in AuthContext with toast
     } finally {
       setLoading(false);
     }

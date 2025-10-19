@@ -13,30 +13,14 @@ import Navbar from '@/components/Navbar';
 import UserManagement from '@/components/admin/UserManagement';
 import Analytics from '@/components/admin/Analytics';
 import Settings from '@/components/admin/Settings';
+import SystemLogs from '@/components/admin/SystemLogs';
+import BulkActions from '@/components/admin/BulkActions';
+import { User, Drawing, Stats, DashboardProps } from '@/types';
 import { adminAPI, drawingAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 
-interface Drawing {
-  _id?: string;
-  id?: string;
-  title: string;
-  thumbnail: string;
-  likes: number;
-  views: number;
-  createdAt: string;
-  updatedAt?: string;
-  isPublic?: boolean;
-}
-
-interface Stats {
-  drawingCount: number;
-  publicDrawings: number;
-  totalLikes: number;
-  totalViews: number;
-}
-
-interface AdminDashboardProps {
-  user: any;
+interface AdminDashboardProps extends DashboardProps {
+  user: User;
   drawings: Drawing[];
   stats: Stats | null;
   onDelete: (id: string) => void;
@@ -44,6 +28,8 @@ interface AdminDashboardProps {
 }
 
 export default function AdminDashboard({ user, drawings, stats, onDelete, onUpdate }: AdminDashboardProps) {
+  const [showSystemLogs, setShowSystemLogs] = useState(false);
+  const [showBulkActions, setShowBulkActions] = useState(false);
   const handleToggleVisibility = async (drawingId: string, currentStatus: boolean) => {
     try {
       await drawingAPI.toggleVisibility(drawingId, !currentStatus);
@@ -226,7 +212,7 @@ export default function AdminDashboard({ user, drawings, stats, onDelete, onUpda
           )}
 
           {/* Admin Quick Actions */}
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-8">
             <QuickActionCard
               icon={<Palette />}
               title="Create"
@@ -243,7 +229,7 @@ export default function AdminDashboard({ user, drawings, stats, onDelete, onUpda
               icon={<Download />}
               title="Export"
               description="Batch export"
-              href="#"
+              onClick={() => setShowBulkActions(true)}
             />
             <QuickActionCard
               icon={<Users />}
@@ -262,6 +248,18 @@ export default function AdminDashboard({ user, drawings, stats, onDelete, onUpda
               title="Settings"
               description="System config"
               onClick={() => setShowSettings(true)}
+            />
+            <QuickActionCard
+              icon={<Activity />}
+              title="System Logs"
+              description="Activity logs"
+              onClick={() => setShowSystemLogs(true)}
+            />
+            <QuickActionCard
+              icon={<Shield />}
+              title="Bulk Actions"
+              description="Admin tools"
+              onClick={() => setShowBulkActions(true)}
             />
           </div>
 
@@ -335,6 +333,11 @@ export default function AdminDashboard({ user, drawings, stats, onDelete, onUpda
         {showUserManagement && <UserManagement onClose={() => setShowUserManagement(false)} />}
         {showAnalytics && <Analytics onClose={() => setShowAnalytics(false)} />}
         {showSettings && <Settings onClose={() => setShowSettings(false)} />}
+        {showSystemLogs && <SystemLogs onClose={() => setShowSystemLogs(false)} />}
+        {showBulkActions && <BulkActions onClose={() => setShowBulkActions(false)} onComplete={() => {
+          setShowBulkActions(false);
+          if (onUpdate) onUpdate();
+        }} />}
       </AnimatePresence>
     </div>
   );
