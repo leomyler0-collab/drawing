@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Palette, Crown, Trash2, Edit, Eye, Calendar, TrendingUp, Lock } from 'lucide-react';
+import { Palette, Crown, Trash2, Edit, Eye, Calendar, TrendingUp, Lock, Globe, Lock as LockIcon } from 'lucide-react';
 import Navbar from '@/components/Navbar';
+import { drawingAPI } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 interface Drawing {
   _id?: string;
@@ -15,6 +17,7 @@ interface Drawing {
   views: number;
   createdAt: string;
   updatedAt?: string;
+  isPublic?: boolean;
 }
 
 interface Stats {
@@ -29,9 +32,21 @@ interface FreeDashboardProps {
   drawings: Drawing[];
   stats: Stats | null;
   onDelete: (id: string) => void;
+  onUpdate?: () => void;
 }
 
-export default function FreeDashboard({ user, drawings, stats, onDelete }: FreeDashboardProps) {
+export default function FreeDashboard({ user, drawings, stats, onDelete, onUpdate }: FreeDashboardProps) {
+  const handleToggleVisibility = async (drawingId: string, currentStatus: boolean) => {
+    try {
+      await drawingAPI.toggleVisibility(drawingId, !currentStatus);
+      toast.success(`Drawing is now ${!currentStatus ? 'public' : 'private'}!`);
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      console.error('Failed to toggle visibility:', error);
+      toast.error('Failed to update visibility');
+    }
+  };
+
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -142,6 +157,10 @@ export default function FreeDashboard({ user, drawings, stats, onDelete }: FreeD
                     key={drawing._id || drawing.id}
                     drawing={drawing}
                     onDelete={() => onDelete(drawing._id || drawing.id || '')}
+                    onToggleVisibility={() => handleToggleVisibility(
+                      drawing._id || drawing.id || '', 
+                      drawing.isPublic || false
+                    )}
                   />
                 ))}
               </div>
@@ -202,7 +221,15 @@ function StatCard({
   );
 }
 
-function DrawingCard({ drawing, onDelete }: { drawing: Drawing; onDelete: () => void }) {
+function DrawingCard({ 
+  drawing, 
+  onDelete,
+  onToggleVisibility 
+}: { 
+  drawing: Drawing; 
+  onDelete: () => void;
+  onToggleVisibility: () => void;
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
@@ -210,6 +237,25 @@ function DrawingCard({ drawing, onDelete }: { drawing: Drawing; onDelete: () => 
       whileHover={{ y: -5 }}
       className="spooky-card relative group"
     >
+      {/* Public/Private Badge */}
+      <div className="absolute top-3 right-3 z-10">
+        <button
+          onClick={onToggleVisibility}
+          className={`px-2 py-1 rounded-lg text-xs font-semibold transition-all ${
+            drawing.isPublic 
+              ? 'bg-green-500/20 text-green-400 border border-green-500/50' 
+              : 'bg-gray-500/20 text-gray-400 border border-gray-500/50'
+          }`}
+          title={`Click to make ${drawing.isPublic ? 'private' : 'public'}`}
+        >
+          {drawing.isPublic ? (
+            <><Globe size={12} className="inline mr-1" />Public</>
+          ) : (
+            <><LockIcon size={12} className="inline mr-1" />Private</>
+          )}
+        </button>
+      </div>
+
       <div className="aspect-square rounded-lg overflow-hidden mb-3 bg-spooky-bg">
         <img
           src={drawing.thumbnail}
@@ -222,9 +268,9 @@ function DrawingCard({ drawing, onDelete }: { drawing: Drawing; onDelete: () => 
 
       <div className="flex items-center gap-4 text-sm text-gray-400 mb-3">
         <span>
-          <Eye className="inline" size={14} /> {drawing.views}
+          <Eye className="inline" size={14} /> {drawing.views || 0}
         </span>
-        <span>👍 {drawing.likes}</span>
+        <span>👍 {drawing.likes || 0}</span>
       </div>
 
       <div className="flex gap-2">

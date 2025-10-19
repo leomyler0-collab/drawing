@@ -301,4 +301,139 @@ router.put('/settings', authenticate, requireAdmin, async (req: AuthRequest, res
   }
 });
 
+// Admin: Delete any public drawing
+router.delete('/drawings/:drawingId', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const { drawingId } = req.params;
+
+    if (!isMongoConnected()) {
+      return res.status(503).json({ error: 'Database not connected' });
+    }
+
+    const drawing = await Drawing.findByIdAndDelete(drawingId);
+
+    if (!drawing) {
+      return res.status(404).json({ error: 'Drawing not found' });
+    }
+
+    res.json({
+      message: 'Drawing deleted successfully',
+    });
+  } catch (error) {
+    console.error('Admin delete drawing error:', error);
+    res.status(500).json({ error: 'Failed to delete drawing' });
+  }
+});
+
+// Admin: Update drawing visibility (make public/private)
+router.patch('/drawings/:drawingId/visibility', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const { drawingId } = req.params;
+    const { isPublic } = req.body;
+
+    if (!isMongoConnected()) {
+      return res.status(503).json({ error: 'Database not connected' });
+    }
+
+    if (typeof isPublic !== 'boolean') {
+      return res.status(400).json({ error: 'isPublic must be a boolean' });
+    }
+
+    const drawing = await Drawing.findByIdAndUpdate(
+      drawingId,
+      { isPublic },
+      { new: true }
+    );
+
+    if (!drawing) {
+      return res.status(404).json({ error: 'Drawing not found' });
+    }
+
+    res.json({
+      message: `Drawing is now ${isPublic ? 'public' : 'private'}`,
+      drawing: {
+        _id: drawing._id,
+        isPublic: drawing.isPublic,
+      },
+    });
+  } catch (error) {
+    console.error('Admin update visibility error:', error);
+    res.status(500).json({ error: 'Failed to update visibility' });
+  }
+});
+
+// Admin: Manually adjust likes on any drawing
+router.patch('/drawings/:drawingId/likes', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const { drawingId } = req.params;
+    const { likes } = req.body;
+
+    if (!isMongoConnected()) {
+      return res.status(503).json({ error: 'Database not connected' });
+    }
+
+    if (typeof likes !== 'number' || likes < 0) {
+      return res.status(400).json({ error: 'Likes must be a non-negative number' });
+    }
+
+    const drawing = await Drawing.findByIdAndUpdate(
+      drawingId,
+      { likes },
+      { new: true }
+    );
+
+    if (!drawing) {
+      return res.status(404).json({ error: 'Drawing not found' });
+    }
+
+    res.json({
+      message: 'Likes updated successfully',
+      drawing: {
+        _id: drawing._id,
+        likes: drawing.likes,
+      },
+    });
+  } catch (error) {
+    console.error('Admin update likes error:', error);
+    res.status(500).json({ error: 'Failed to update likes' });
+  }
+});
+
+// Admin: Reset views on any drawing
+router.patch('/drawings/:drawingId/views', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const { drawingId } = req.params;
+    const { views } = req.body;
+
+    if (!isMongoConnected()) {
+      return res.status(503).json({ error: 'Database not connected' });
+    }
+
+    if (typeof views !== 'number' || views < 0) {
+      return res.status(400).json({ error: 'Views must be a non-negative number' });
+    }
+
+    const drawing = await Drawing.findByIdAndUpdate(
+      drawingId,
+      { views },
+      { new: true }
+    );
+
+    if (!drawing) {
+      return res.status(404).json({ error: 'Drawing not found' });
+    }
+
+    res.json({
+      message: 'Views updated successfully',
+      drawing: {
+        _id: drawing._id,
+        views: drawing.views,
+      },
+    });
+  } catch (error) {
+    console.error('Admin update views error:', error);
+    res.status(500).json({ error: 'Failed to update views' });
+  }
+});
+
 export default router;

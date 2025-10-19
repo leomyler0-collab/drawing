@@ -66,7 +66,20 @@ export const drawingAPI = {
   
   delete: (id: string) => api.delete(`/api/drawings/${id}`),
   
+  // Public gallery
   gallery: (page: number = 1) => api.get(`/api/drawings/gallery/public?page=${page}`),
+  
+  // Get single public drawing
+  getPublic: (id: string) => api.get(`/api/drawings/public/${id}`),
+  
+  // Like/Unlike
+  like: (id: string) => api.post(`/api/drawings/${id}/like`),
+  
+  unlike: (id: string) => api.post(`/api/drawings/${id}/unlike`),
+  
+  // Toggle visibility
+  toggleVisibility: (id: string, isPublic: boolean) => 
+    api.patch(`/api/drawings/${id}/visibility`, { isPublic }),
 };
 
 export const userAPI = {
@@ -107,4 +120,16 @@ export const adminAPI = {
   getSettings: () => api.get('/api/admin/settings'),
   
   updateSettings: (settings: any) => api.put('/api/admin/settings', settings),
+  
+  // Drawing Management
+  deleteDrawing: (drawingId: string) => api.delete(`/api/admin/drawings/${drawingId}`),
+  
+  updateDrawingVisibility: (drawingId: string, isPublic: boolean) =>
+    api.patch(`/api/admin/drawings/${drawingId}/visibility`, { isPublic }),
+  
+  updateDrawingLikes: (drawingId: string, likes: number) =>
+    api.patch(`/api/admin/drawings/${drawingId}/likes`, { likes }),
+  
+  updateDrawingViews: (drawingId: string, views: number) =>
+    api.patch(`/api/admin/drawings/${drawingId}/views`, { views }),
 };

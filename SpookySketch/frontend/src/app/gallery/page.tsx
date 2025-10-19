@@ -3,11 +3,10 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Eye, Heart } from 'lucide-react';
-import axios from 'axios';
 import Navbar from '@/components/Navbar';
-import { localDB } from '@/utils/localStorageDB';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import { drawingAPI } from '@/lib/api';
+import toast from 'react-hot-toast';
+import Cookies from 'js-cookie';
 
 interface Drawing {
   _id: string;
@@ -23,31 +22,39 @@ export default function GalleryPage() {
   const [drawings, setDrawings] = useState<Drawing[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    setIsAuthenticated(!!Cookies.get('token'));
+  }, []);
 
   const fetchGallery = async () => {
     try {
-      // Try backend first
-      const response = await axios.get(`${API_URL}/api/drawings/gallery/public?page=${page}`, {
-        timeout: 3000,
-      });
+      const response = await drawingAPI.gallery(page);
       setDrawings(response.data.drawings);
     } catch (error) {
-      // Gracefully fallback to localStorage
-      console.log('⚡ Backend unavailable, showing local public drawings');
-      const localDrawings = localDB.getAllDrawings()
-        .filter(d => d.isPublic)
-        .map(d => ({
-          _id: d.id,
-          title: d.title,
-          thumbnail: d.thumbnail,
-          likes: d.likes,
-          views: d.views,
-          userId: { username: 'Local Artist', avatar: '🎨' },
-          createdAt: d.createdAt,
-        }));
-      setDrawings(localDrawings);
+      console.error('Failed to fetch gallery:', error);
+      toast.error('Failed to load gallery');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLike = async (drawingId: string) => {
+    if (!isAuthenticated) {
+      toast.error('Please login to like drawings');
+      return;
+    }
+
+    try {
+      const response = await drawingAPI.like(drawingId);
+      setDrawings(prev => prev.map(d => 
+        d._id === drawingId ? { ...d, likes: response.data.likes } : d
+      ));
+      toast.success('Liked! ❤️');
+    } catch (error) {
+      console.error('Failed to like:', error);
+      toast.error('Failed to like drawing');
     }
   };
 
@@ -85,7 +92,13 @@ export default function GalleryPage() {
           ) : (
             <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
               {drawings.map((drawing, index) => (
-                <GalleryCard key={drawing._id} drawing={drawing} index={index} />
+                <GalleryCard 
+                  key={drawing._id} 
+                  drawing={drawing} 
+                  index={index}
+                  onLike={handleLike}
+                  canLike={isAuthenticated}
+                />
               ))}
             </div>
           )}
@@ -95,7 +108,17 @@ export default function GalleryPage() {
   );
 }
 
-function GalleryCard({ drawing, index }: { drawing: Drawing; index: number }) {
+function GalleryCard({ 
+  drawing, 
+  index, 
+  onLike,
+  canLike
+}: { 
+  drawing: Drawing; 
+  index: number;
+  onLike: (id: string) => void;
+  canLike: boolean;
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -119,13 +142,28 @@ function GalleryCard({ drawing, index }: { drawing: Drawing; index: number }) {
         <span className="text-sm text-gray-400">{drawing.userId.username}</span>
       </div>
 
-      <div className="flex items-center gap-4 text-sm text-gray-400">
-        <span className="flex items-center gap-1">
-          <Eye size={14} /> {drawing.views}
-        </span>
-        <span className="flex items-center gap-1">
-          <Heart size={14} /> {drawing.likes}
-        </span>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4 text-sm text-gray-400">
+          <span className="flex items-center gap-1">
+            <Eye size={14} /> {drawing.views}
+          </span>
+          <span className="flex items-center gap-1">
+            <Heart size={14} /> {drawing.likes}
+          </span>
+        </div>
+        
+        <button
+          onClick={() => onLike(drawing._id)}
+          disabled={!canLike}
+          className={`p-2 rounded-lg transition-colors ${
+            canLike 
+              ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' 
+              : 'bg-gray-500/10 text-gray-500 cursor-not-allowed'
+          }`}
+          title={canLike ? 'Like this drawing' : 'Login to like'}
+        >
+          <Heart size={18} fill={canLike ? 'currentColor' : 'none'} />
+        </button>
       </div>
 
       <div className="text-xs text-gray-500 mt-2">

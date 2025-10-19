@@ -309,4 +309,165 @@ router.get('/gallery/public', async (req, res: Response) => {
   }
 });
 
+// Get single public drawing with view tracking
+router.get('/public/:id', async (req, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    if (isMongoConnected()) {
+      // Increment view count
+      const drawing = await Drawing.findOneAndUpdate(
+        { _id: id, isPublic: true },
+        { $inc: { views: 1 } },
+        { new: true }
+      ).populate('userId', 'username avatar tier');
+
+      if (!drawing) {
+        return res.status(404).json({ error: 'Drawing not found or not public' });
+      }
+
+      res.json({ drawing });
+    } else {
+      const drawing = await mockDrawingsDB.findById(id);
+      if (!drawing || !drawing.isPublic) {
+        return res.status(404).json({ error: 'Drawing not found or not public' });
+      }
+      drawing.views = (drawing.views || 0) + 1;
+      res.json({ drawing });
+    }
+  } catch (error) {
+    console.error('Get public drawing error:', error);
+    res.status(500).json({ error: 'Failed to fetch drawing' });
+  }
+});
+
+// Like a drawing (authenticated users only)
+router.post('/:id/like', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    if (isMongoConnected()) {
+      const drawing = await Drawing.findOneAndUpdate(
+        { _id: id, isPublic: true },
+        { $inc: { likes: 1 } },
+        { new: true }
+      );
+
+      if (!drawing) {
+        return res.status(404).json({ error: 'Drawing not found or not public' });
+      }
+
+      res.json({
+        message: 'Drawing liked!',
+        likes: drawing.likes,
+      });
+    } else {
+      const drawing = await mockDrawingsDB.findById(id);
+      if (!drawing || !drawing.isPublic) {
+        return res.status(404).json({ error: 'Drawing not found or not public' });
+      }
+      drawing.likes = (drawing.likes || 0) + 1;
+      res.json({
+        message: 'Drawing liked! (Mock Mode)',
+        likes: drawing.likes,
+      });
+    }
+  } catch (error) {
+    console.error('Like drawing error:', error);
+    res.status(500).json({ error: 'Failed to like drawing' });
+  }
+});
+
+// Unlike a drawing (authenticated users only)
+router.post('/:id/unlike', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    if (isMongoConnected()) {
+      const drawing = await Drawing.findOneAndUpdate(
+        { _id: id, isPublic: true },
+        { $inc: { likes: -1 } },
+        { new: true }
+      );
+
+      if (!drawing) {
+        return res.status(404).json({ error: 'Drawing not found or not public' });
+      }
+
+      // Ensure likes don't go below 0
+      if (drawing.likes < 0) {
+        drawing.likes = 0;
+        await drawing.save();
+      }
+
+      res.json({
+        message: 'Like removed',
+        likes: drawing.likes,
+      });
+    } else {
+      const drawing = await mockDrawingsDB.findById(id);
+      if (!drawing || !drawing.isPublic) {
+        return res.status(404).json({ error: 'Drawing not found or not public' });
+      }
+      drawing.likes = Math.max(0, (drawing.likes || 0) - 1);
+      res.json({
+        message: 'Like removed (Mock Mode)',
+        likes: drawing.likes,
+      });
+    }
+  } catch (error) {
+    console.error('Unlike drawing error:', error);
+    res.status(500).json({ error: 'Failed to unlike drawing' });
+  }
+});
+
+// Toggle drawing public/private status
+router.patch('/:id/visibility', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { isPublic } = req.body;
+    const userId = req.userId!;
+
+    if (typeof isPublic !== 'boolean') {
+      return res.status(400).json({ error: 'isPublic must be a boolean' });
+    }
+
+    if (isMongoConnected()) {
+      const drawing = await Drawing.findOneAndUpdate(
+        { _id: id, userId },
+        { isPublic },
+        { new: true }
+      );
+
+      if (!drawing) {
+        return res.status(404).json({ error: 'Drawing not found' });
+      }
+
+      res.json({
+        message: `Drawing is now ${isPublic ? 'public' : 'private'}`,
+        drawing: {
+          _id: drawing._id,
+          isPublic: drawing.isPublic,
+        },
+      });
+    } else {
+      const drawing = await mockDrawingsDB.findById(id);
+      if (!drawing || drawing.userId !== userId) {
+        return res.status(404).json({ error: 'Drawing not found' });
+      }
+      drawing.isPublic = isPublic;
+      res.json({
+        message: `Drawing is now ${isPublic ? 'public' : 'private'} (Mock Mode)`,
+        drawing: {
+          _id: drawing._id,
+          isPublic: drawing.isPublic,
+        },
+      });
+    }
+  } catch (error) {
+    console.error('Toggle visibility error:', error);
+    res.status(500).json({ error: 'Failed to update visibility' });
+  }
+});
+
 export default router;
