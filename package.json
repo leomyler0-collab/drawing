@@ -1,0 +1,13 @@
+{
+  "name": "spookysketch-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install:frontend": "cd SpookySketch/frontend && npm install",
+    "build": "cd SpookySketch/frontend && npm install && npm run build",
+    "dev": "cd SpookySketch/frontend && npm run dev"
+  },
+  "workspaces": [
+    "SpookySketch/frontend"
+  ]
+}

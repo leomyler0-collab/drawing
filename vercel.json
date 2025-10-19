@@ -1,6 +1,4 @@
 {
-  "buildCommand": "cd SpookySketch/frontend && npm ci && npm run build",
-  "outputDirectory": "SpookySketch/frontend/.next",
-  "installCommand": "echo 'Skipping global install'",
-  "framework": null
+  "buildCommand": "npm run build",
+  "outputDirectory": "SpookySketch/frontend/.next"
 }
