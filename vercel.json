@@ -1,0 +1,5 @@
+{
+  "installCommand": "cd SpookySketch && npm install && npm install --prefix frontend",
+  "buildCommand": "cd SpookySketch && npm run build",
+  "outputDirectory": "SpookySketch/frontend/.next"
+}
