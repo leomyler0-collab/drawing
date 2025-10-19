@@ -10,6 +10,7 @@ import {
 import Navbar from '@/components/Navbar';
 import { drawingAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
+import { localDB } from '@/utils/localStorageDB';
 import { User, Drawing, Stats, DashboardProps } from '@/types';
 
 interface ProDashboardProps extends DashboardProps {
@@ -22,13 +23,30 @@ interface ProDashboardProps extends DashboardProps {
 
 export default function ProDashboard({ user, drawings, stats, onDelete, onUpdate }: ProDashboardProps) {
   const handleToggleVisibility = async (drawingId: string, currentStatus: boolean) => {
+    const newStatus = !currentStatus;
+    const statusText = newStatus ? 'public' : 'private';
+    
     try {
-      await drawingAPI.toggleVisibility(drawingId, !currentStatus);
-      toast.success(`Drawing is now ${!currentStatus ? 'public' : 'private'}!`);
+      // Try backend first
+      await drawingAPI.toggleVisibility(drawingId, newStatus);
+      toast.success(`✅ Drawing is now ${statusText}!`);
       if (onUpdate) onUpdate();
     } catch (error) {
-      console.error('Failed to toggle visibility:', error);
-      toast.error('Failed to update visibility');
+      // Fallback to localStorage (production mode)
+      console.log('⚡ Using localStorage for visibility toggle');
+      try {
+        const updated = localDB.toggleVisibility(drawingId, newStatus);
+        if (updated) {
+          toast.success(`✅ Drawing is now ${statusText}!`);
+          if (onUpdate) onUpdate();
+        } else {
+          throw new Error('Drawing not found');
+        }
+      } catch (localError) {
+        console.error('Failed to toggle visibility:', localError);
+        const message = localError instanceof Error ? localError.message : 'Failed to update visibility';
+        toast.error(message);
+      }
     }
   };
   return (

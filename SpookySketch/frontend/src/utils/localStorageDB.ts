@@ -125,6 +125,27 @@ class LocalStorageDB {
     return !drawing.isFavorite;
   }
 
+  // Toggle visibility (public/private)
+  toggleVisibility(id: string, isPublic: boolean): LocalDrawing | null {
+    if (!this.isBrowser()) {
+      throw new Error('LocalStorage is only available in browser');
+    }
+    
+    const drawing = this.getDrawing(id);
+    if (!drawing) {
+      console.error('Drawing not found:', id);
+      return null;
+    }
+
+    const updated = this.updateDrawing(id, { isPublic });
+    
+    if (updated) {
+      console.log(`✅ Drawing visibility updated: ${updated.title} is now ${isPublic ? 'PUBLIC' : 'PRIVATE'}`);
+    }
+    
+    return updated;
+  }
+
   // Like drawing
   likeDrawing(id: string): number {
     const drawing = this.getDrawing(id);
