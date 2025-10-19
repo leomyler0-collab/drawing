@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   X, Settings as SettingsIcon, Shield, Bell, Database, 
   Palette, Lock, Globe, Save, Eye, EyeOff, CheckCircle,
   AlertCircle, Mail, Server, HardDrive, Cpu
 } from 'lucide-react';
+import { adminAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 interface SettingsProps {
@@ -33,13 +34,34 @@ export default function Settings({ onClose }: SettingsProps) {
   });
 
   const [showSuccess, setShowSuccess] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const handleSave = () => {
-    // In a real app, this would save to backend/database
-    localStorage.setItem('admin_settings', JSON.stringify(settings));
-    setShowSuccess(true);
-    toast.success('Settings saved successfully!');
-    setTimeout(() => setShowSuccess(false), 3000);
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const response = await adminAPI.getSettings();
+      setSettings(response.data.settings);
+      setLoading(false);
+    } catch (error: any) {
+      console.error('Failed to load settings:', error);
+      toast.error('Failed to load settings');
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      await adminAPI.updateSettings(settings);
+      setShowSuccess(true);
+      toast.success('Settings saved successfully!');
+      setTimeout(() => setShowSuccess(false), 3000);
+    } catch (error: any) {
+      console.error('Failed to save settings:', error);
+      toast.error(error.response?.data?.error || 'Failed to save settings');
+    }
   };
 
   const handleReset = () => {

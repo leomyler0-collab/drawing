@@ -13,6 +13,7 @@ import authRoutes from './routes/auth';
 import drawingRoutes from './routes/drawings';
 import userRoutes from './routes/user';
 import subscriptionRoutes from './routes/subscription';
+import adminRoutes from './routes/admin';
 
 // Import socket handler
 import { initializeSocketIO } from './socket/socketHandler';
@@ -53,6 +54,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/drawings', drawingRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/subscription', subscriptionRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -12,6 +12,7 @@ import Navbar from '@/components/Navbar';
 import UserManagement from '@/components/admin/UserManagement';
 import Analytics from '@/components/admin/Analytics';
 import Settings from '@/components/admin/Settings';
+import { adminAPI } from '@/lib/api';
 
 interface Drawing {
   _id?: string;
@@ -43,6 +44,26 @@ export default function AdminDashboard({ user, drawings, stats, onDelete }: Admi
   const [showUserManagement, setShowUserManagement] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [adminStats, setAdminStats] = useState({
+    totalUsers: 0,
+    totalDrawings: 0,
+  });
+
+  useEffect(() => {
+    loadAdminStats();
+  }, []);
+
+  const loadAdminStats = async () => {
+    try {
+      const response = await adminAPI.getAnalytics();
+      setAdminStats({
+        totalUsers: response.data.analytics.totalUsers,
+        totalDrawings: response.data.analytics.totalDrawings,
+      });
+    } catch (error) {
+      console.error('Failed to load admin stats:', error);
+    }
+  };
 
   return (
     <div className="min-h-screen">
@@ -150,13 +171,13 @@ export default function AdminDashboard({ user, drawings, stats, onDelete }: Admi
                 <AdminControlCard
                   icon={<Users />}
                   title="Users"
-                  value="--"
+                  value={adminStats.totalUsers}
                   description="Total users"
                 />
                 <AdminControlCard
                   icon={<Palette />}
                   title="All Drawings"
-                  value="--"
+                  value={adminStats.totalDrawings}
                   description="System-wide"
                 />
                 <AdminControlCard

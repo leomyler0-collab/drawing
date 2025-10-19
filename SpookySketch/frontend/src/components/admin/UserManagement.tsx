@@ -7,8 +7,18 @@ import {
   Zap, X, Edit, Trash2, Mail, Calendar, Activity,
   CheckCircle, XCircle, AlertCircle
 } from 'lucide-react';
-import { clientAuth, User } from '@/utils/clientAuth';
+import { adminAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
+
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  tier: 'free' | 'pro' | 'vip' | 'admin';
+  avatar: string;
+  createdAt: string;
+  updatedAt?: string;
+}
 
 interface UserManagementProps {
   onClose: () => void;
@@ -27,9 +37,14 @@ export default function UserManagement({ onClose }: UserManagementProps) {
     loadUsers();
   }, []);
 
-  const loadUsers = () => {
-    const allUsers = clientAuth.getAllUsers();
-    setUsers(allUsers);
+  const loadUsers = async () => {
+    try {
+      const response = await adminAPI.getAllUsers();
+      setUsers(response.data.users);
+    } catch (error: any) {
+      console.error('Failed to load users:', error);
+      toast.error(error.response?.data?.error || 'Failed to load users');
+    }
   };
 
   const filteredUsers = users.filter(user => {
@@ -59,24 +74,15 @@ export default function UserManagement({ onClose }: UserManagementProps) {
     return badges[tier as keyof typeof badges] || badges.free;
   };
 
-  const handleDeleteUser = (userId: string, username: string) => {
-    if (userId === 'admin_elite_001') {
-      toast.error('Cannot delete the primary admin account!');
-      return;
-    }
-    
+  const handleDeleteUser = async (userId: string, username: string) => {
     if (confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
       try {
-        // Delete user from localStorage
-        const storedUsers = JSON.parse(localStorage.getItem('spookysketch_users') || '[]');
-        const updatedUsers = storedUsers.filter((u: any) => u.id !== userId);
-        localStorage.setItem('spookysketch_users', JSON.stringify(updatedUsers));
-        
+        await adminAPI.deleteUser(userId);
         toast.success(`User "${username}" deleted successfully!`);
         loadUsers();
-      } catch (error) {
+      } catch (error: any) {
         console.error('Delete error:', error);
-        toast.error('Failed to delete user');
+        toast.error(error.response?.data?.error || 'Failed to delete user');
       }
     }
   };
@@ -94,20 +100,15 @@ export default function UserManagement({ onClose }: UserManagementProps) {
 
   const handleUpdateTier = async () => {
     if (!selectedUser) return;
-    
-    if (selectedUser.id === 'admin_elite_001' && newTier !== 'admin') {
-      toast.error('Cannot change the primary admin tier!');
-      return;
-    }
 
     try {
-      await clientAuth.updateProfile(selectedUser.id, { tier: newTier });
+      await adminAPI.updateUserTier(selectedUser.id, newTier);
       toast.success(`Updated ${selectedUser.username} to ${newTier.toUpperCase()} tier!`);
       setShowEditTier(false);
       loadUsers();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Update error:', error);
-      toast.error('Failed to update user tier');
+      toast.error(error.response?.data?.error || 'Failed to update user tier');
     }
   };
 
@@ -253,7 +254,7 @@ export default function UserManagement({ onClose }: UserManagementProps) {
                     >
                       Edit Tier
                     </button>
-                    {user.id !== 'admin_elite_001' && (
+                    {user.tier !== 'admin' && (
                       <button
                         onClick={() => handleDeleteUser(user.id, user.username)}
                         className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
@@ -325,7 +326,7 @@ export default function UserManagement({ onClose }: UserManagementProps) {
                               ? 'border-purple-500 bg-purple-500/20'
                               : 'border-gray-500/20 bg-spooky-bg hover:border-purple-500/50'
                           } ${
-                            selectedUser.id === 'admin_elite_001' && tier !== 'admin'
+                            selectedUser.tier === 'admin' && tier !== 'admin'
                               ? 'opacity-50 cursor-not-allowed'
                               : ''
                           }`}
@@ -336,7 +337,7 @@ export default function UserManagement({ onClose }: UserManagementProps) {
                             value={tier}
                             checked={newTier === tier}
                             onChange={(e) => setNewTier(e.target.value as typeof newTier)}
-                            disabled={selectedUser.id === 'admin_elite_001' && tier !== 'admin'}
+                            disabled={selectedUser.tier === 'admin' && tier !== 'admin'}
                             className="text-purple-500"
                           />
                           <div className="flex items-center gap-2 flex-1">
@@ -352,12 +353,12 @@ export default function UserManagement({ onClose }: UserManagementProps) {
                     </div>
                   </div>
 
-                  {selectedUser.id === 'admin_elite_001' && (
+                  {selectedUser.tier === 'admin' && (
                     <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
                       <div className="flex items-start gap-2">
                         <AlertCircle className="text-orange-400 mt-0.5" size={16} />
                         <p className="text-xs text-orange-400">
-                          Primary admin account tier cannot be changed.
+                          Admin account tier cannot be changed.
                         </p>
                       </div>
                     </div>
@@ -468,7 +469,7 @@ export default function UserManagement({ onClose }: UserManagementProps) {
                     >
                       Edit Tier
                     </button>
-                    {selectedUser.id !== 'admin_elite_001' && (
+                    {selectedUser.tier !== 'admin' && (
                       <button
                         onClick={() => {
                           setShowUserDetails(false);

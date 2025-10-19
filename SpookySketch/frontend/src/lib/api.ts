@@ -85,3 +85,26 @@ export const subscriptionAPI = {
   
   cancel: () => api.post('/api/subscription/cancel'),
 };
+
+export const adminAPI = {
+  // User Management
+  getAllUsers: () => api.get('/api/admin/users'),
+  
+  getUserDetails: (userId: string) => api.get(`/api/admin/users/${userId}`),
+  
+  updateUserTier: (userId: string, tier: 'free' | 'pro' | 'vip' | 'admin') =>
+    api.put(`/api/admin/users/${userId}/tier`, { tier }),
+  
+  deleteUser: (userId: string) => api.delete(`/api/admin/users/${userId}`),
+  
+  // Analytics
+  getAnalytics: () => api.get('/api/admin/analytics'),
+  
+  // Drawings
+  getAllDrawings: () => api.get('/api/admin/drawings'),
+  
+  // Settings
+  getSettings: () => api.get('/api/admin/settings'),
+  
+  updateSettings: (settings: any) => api.put('/api/admin/settings', settings),
+};

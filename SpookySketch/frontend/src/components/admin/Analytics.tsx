@@ -6,8 +6,8 @@ import {
   X, TrendingUp, Users, Palette, Eye, Activity, 
   BarChart3, Calendar, Download, Clock, Star, Shield
 } from 'lucide-react';
-import { clientAuth } from '@/utils/clientAuth';
-import { localDB } from '@/utils/localStorageDB';
+import { adminAPI } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 interface AnalyticsProps {
   onClose: () => void;
@@ -33,35 +33,24 @@ export default function Analytics({ onClose }: AnalyticsProps) {
     loadAnalytics();
   }, []);
 
-  const loadAnalytics = () => {
-    const users = clientAuth.getAllUsers();
-    const drawings = localDB.getAllDrawings();
-    const stats = localDB.getStats();
-
-    const tierDist = {
-      admin: users.filter(u => u.tier === 'admin').length,
-      vip: users.filter(u => u.tier === 'vip').length,
-      pro: users.filter(u => u.tier === 'pro').length,
-      free: users.filter(u => u.tier === 'free').length,
-    };
-
-    // Simulate recent activity
-    const recentAct = drawings.slice(-10).reverse().map(d => ({
-      type: 'drawing',
-      title: d.title,
-      time: d.createdAt,
-      user: 'User'
-    }));
-
-    setAnalytics({
-      totalUsers: users.length,
-      totalDrawings: drawings.length,
-      totalViews: stats.totalViews,
-      totalLikes: stats.totalLikes,
-      activeToday: Math.floor(users.length * 0.3), // Simulated
-      tierDistribution: tierDist,
-      recentActivity: recentAct
-    });
+  const loadAnalytics = async () => {
+    try {
+      const response = await adminAPI.getAnalytics();
+      const data = response.data.analytics;
+      
+      setAnalytics({
+        totalUsers: data.totalUsers,
+        totalDrawings: data.totalDrawings,
+        totalViews: data.totalViews,
+        totalLikes: data.totalLikes,
+        activeToday: Math.floor(data.totalUsers * 0.3), // Simulated
+        tierDistribution: data.tierDistribution,
+        recentActivity: data.recentActivity
+      });
+    } catch (error: any) {
+      console.error('Failed to load analytics:', error);
+      toast.error(error.response?.data?.error || 'Failed to load analytics');
+    }
   };
 
   const exportData = () => {
