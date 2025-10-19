@@ -22,19 +22,24 @@ export default function GalleryPage() {
   const [drawings, setDrawings] = useState<Drawing[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [likedDrawings, setLikedDrawings] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     setIsAuthenticated(!!Cookies.get('token'));
   }, []);
 
   const fetchGallery = async () => {
+    setLoading(true);
     try {
       const response = await drawingAPI.gallery(page);
-      setDrawings(response.data.drawings);
+      setDrawings(response.data.drawings || []);
+      setTotalPages(response.data.pagination?.pages || 1);
     } catch (error) {
       console.error('Failed to fetch gallery:', error);
       toast.error('Failed to load gallery');
+      setDrawings([]);
     } finally {
       setLoading(false);
     }
@@ -46,15 +51,21 @@ export default function GalleryPage() {
       return;
     }
 
+    if (likedDrawings.has(drawingId)) {
+      toast('You already liked this drawing!', { icon: '❤️' });
+      return;
+    }
+
     try {
       const response = await drawingAPI.like(drawingId);
       setDrawings(prev => prev.map(d => 
         d._id === drawingId ? { ...d, likes: response.data.likes } : d
       ));
+      setLikedDrawings(prev => new Set(prev).add(drawingId));
       toast.success('Liked! ❤️');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to like:', error);
-      toast.error('Failed to like drawing');
+      toast.error(error.response?.data?.error || 'Failed to like drawing');
     }
   };
 
@@ -90,17 +101,42 @@ export default function GalleryPage() {
               <p className="text-gray-400">Be the first to share your spooky creation!</p>
             </div>
           ) : (
-            <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {drawings.map((drawing, index) => (
-                <GalleryCard 
-                  key={drawing._id} 
-                  drawing={drawing} 
-                  index={index}
-                  onLike={handleLike}
-                  canLike={isAuthenticated}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {drawings.map((drawing, index) => (
+                  <GalleryCard 
+                    key={drawing._id} 
+                    drawing={drawing} 
+                    index={index}
+                    onLike={handleLike}
+                    canLike={isAuthenticated}
+                  />
+                ))}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-4 mt-12">
+                  <button
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="px-6 py-3 rounded-lg bg-orange-500/20 text-orange-500 hover:bg-orange-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-gray-400">
+                    Page {page} of {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="px-6 py-3 rounded-lg bg-orange-500/20 text-orange-500 hover:bg-orange-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
