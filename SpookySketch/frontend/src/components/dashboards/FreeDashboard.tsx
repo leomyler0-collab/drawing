@@ -5,9 +5,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Palette, Crown, Trash2, Edit, Eye, Calendar, TrendingUp, Lock, Globe, Lock as LockIcon } from 'lucide-react';
 import Navbar from '@/components/Navbar';
-import { drawingAPI } from '@/lib/api';
-import toast from 'react-hot-toast';
-import { localDB } from '@/utils/localStorageDB';
+import { handleVisibilityToggle } from '@/utils/visibilityHandler';
 import { User, Drawing, Stats, DashboardProps } from '@/types';
 
 interface FreeDashboardProps extends DashboardProps {
@@ -16,31 +14,13 @@ interface FreeDashboardProps extends DashboardProps {
 
 export default function FreeDashboard({ user, drawings, stats, onDelete, onUpdate }: FreeDashboardProps) {
   const handleToggleVisibility = async (drawingId: string, currentStatus: boolean) => {
-    const newStatus = !currentStatus;
-    const statusText = newStatus ? 'public' : 'private';
-    
-    try {
-      // Try backend first
-      await drawingAPI.toggleVisibility(drawingId, newStatus);
-      toast.success(`✅ Drawing is now ${statusText}!`);
-      if (onUpdate) onUpdate();
-    } catch (error) {
-      // Fallback to localStorage (production mode)
-      console.log('⚡ Using localStorage for visibility toggle');
-      try {
-        const updated = localDB.toggleVisibility(drawingId, newStatus);
-        if (updated) {
-          toast.success(`✅ Drawing is now ${statusText}!`);
-          if (onUpdate) onUpdate();
-        } else {
-          throw new Error('Drawing not found');
-        }
-      } catch (localError) {
-        console.error('Failed to toggle visibility:', localError);
-        const message = localError instanceof Error ? localError.message : 'Failed to update visibility';
-        toast.error(message);
-      }
-    }
+    await handleVisibilityToggle({
+      drawingId,
+      currentStatus,
+      userId: user.id,
+      onSuccess: onUpdate,
+      source: 'Free'
+    });
   };
 
   return (
