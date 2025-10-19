@@ -67,8 +67,39 @@ initializeSocketIO(io);
 // MongoDB Connection with graceful fallback
 mongoose
   .connect(MONGODB_URI)
-  .then(() => {
+  .then(async () => {
     console.log('✅ Connected to MongoDB');
+    
+    // Auto-create admin user if not exists
+    try {
+      const User = (await import('./models/User')).default;
+      const adminEmail = 'leomyler0@gmail.com';
+      const existingAdmin = await User.findOne({ email: adminEmail });
+      
+      if (!existingAdmin) {
+        const adminUser = new User({
+          username: 'Admin',
+          email: adminEmail,
+          password: 'SuperBoy2020',
+          tier: 'admin',
+          avatar: '👑',
+          isAdmin: true,
+        });
+        await adminUser.save();
+        console.log('👑 Admin account auto-created!');
+        console.log('   Email: leomyler0@gmail.com');
+        console.log('   Password: SuperBoy2020');
+      } else if (existingAdmin.tier !== 'admin') {
+        existingAdmin.tier = 'admin';
+        existingAdmin.isAdmin = true;
+        await existingAdmin.save();
+        console.log('👑 Admin account updated!');
+      } else {
+        console.log('👑 Admin account exists and ready!');
+      }
+    } catch (error) {
+      console.warn('⚠️  Could not verify/create admin account:', error);
+    }
   })
   .catch((error) => {
     console.warn('⚠️  MongoDB connection failed. Running without database.');
