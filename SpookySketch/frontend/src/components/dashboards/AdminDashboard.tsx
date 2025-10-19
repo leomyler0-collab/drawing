@@ -6,13 +6,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Palette, Crown, Trash2, Edit, Eye, Calendar, TrendingUp, 
   Download, Share2, Layers, Sparkles, Users, Star, Infinity as InfinityIcon,
-  Shield, Settings as SettingsIcon, Database, Activity, BarChart3
+  Shield, Settings as SettingsIcon, Database, Activity, BarChart3,
+  Globe, Lock as LockIcon
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import UserManagement from '@/components/admin/UserManagement';
 import Analytics from '@/components/admin/Analytics';
 import Settings from '@/components/admin/Settings';
-import { adminAPI } from '@/lib/api';
+import { adminAPI, drawingAPI } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 interface Drawing {
   _id?: string;
@@ -23,6 +25,7 @@ interface Drawing {
   views: number;
   createdAt: string;
   updatedAt?: string;
+  isPublic?: boolean;
 }
 
 interface Stats {
@@ -37,9 +40,20 @@ interface AdminDashboardProps {
   drawings: Drawing[];
   stats: Stats | null;
   onDelete: (id: string) => void;
+  onUpdate?: () => void;
 }
 
-export default function AdminDashboard({ user, drawings, stats, onDelete }: AdminDashboardProps) {
+export default function AdminDashboard({ user, drawings, stats, onDelete, onUpdate }: AdminDashboardProps) {
+  const handleToggleVisibility = async (drawingId: string, currentStatus: boolean) => {
+    try {
+      await drawingAPI.toggleVisibility(drawingId, !currentStatus);
+      toast.success(`Drawing is now ${!currentStatus ? 'public' : 'private'}!`);
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      console.error('Failed to toggle visibility:', error);
+      toast.error('Failed to update visibility');
+    }
+  };
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [showUserManagement, setShowUserManagement] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
@@ -283,6 +297,10 @@ export default function AdminDashboard({ user, drawings, stats, onDelete }: Admi
                     key={drawing._id || drawing.id}
                     drawing={drawing}
                     onDelete={() => onDelete(drawing._id || drawing.id || '')}
+                    onToggleVisibility={() => handleToggleVisibility(
+                      drawing._id || drawing.id || '', 
+                      drawing.isPublic || false
+                    )}
                     isAdmin={true}
                   />
                 ))}
@@ -412,10 +430,12 @@ function QuickActionCard({
 function DrawingCard({ 
   drawing, 
   onDelete,
+  onToggleVisibility,
   isAdmin 
 }: { 
   drawing: Drawing; 
   onDelete: () => void;
+  onToggleVisibility: () => void;
   isAdmin?: boolean;
 }) {
   return (
@@ -425,6 +445,25 @@ function DrawingCard({
       whileHover={{ y: -5, scale: 1.02 }}
       className={`spooky-card relative group ${isAdmin ? 'border-red-500/30 bg-gradient-to-br from-red-900/10 to-transparent' : ''}`}
     >
+      {/* Public/Private Badge */}
+      <div className="absolute top-3 right-3 z-10">
+        <button
+          onClick={onToggleVisibility}
+          className={`px-2 py-1 rounded-lg text-xs font-semibold transition-all ${
+            drawing.isPublic 
+              ? 'bg-green-500/20 text-green-400 border border-green-500/50' 
+              : 'bg-gray-500/20 text-gray-400 border border-gray-500/50'
+          }`}
+          title={`Click to make ${drawing.isPublic ? 'private' : 'public'}`}
+        >
+          {drawing.isPublic ? (
+            <><Globe size={12} className="inline mr-1" />Public</>
+          ) : (
+            <><LockIcon size={12} className="inline mr-1" />Private</>
+          )}
+        </button>
+      </div>
+
       {isAdmin && (
         <div className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-orange-500 text-white px-2 py-1 rounded-full text-xs font-bold z-10 flex items-center gap-1">
           <Shield size={12} />
@@ -443,9 +482,9 @@ function DrawingCard({
 
       <div className="flex items-center gap-4 text-sm text-gray-400 mb-3">
         <span>
-          <Eye className="inline" size={14} /> {drawing.views}
+          <Eye className="inline" size={14} /> {drawing.views || 0}
         </span>
-        <span>👍 {drawing.likes}</span>
+        <span>👍 {drawing.likes || 0}</span>
       </div>
 
       <div className="flex gap-2">
