@@ -100,23 +100,47 @@ export default function UserManagement({ onClose }: UserManagementProps) {
   const handleUpdateTier = async () => {
     if (!selectedUser) return;
 
+    if (selectedUser.tier === 'admin' && newTier !== 'admin') {
+      toast.error('Cannot change admin tier!');
+      return;
+    }
+
+    const loadingToast = toast.loading(`Updating ${selectedUser.username} to ${newTier.toUpperCase()}...`);
+
     try {
       // Try backend first
       await adminAPI.updateUserTier(selectedUser.id, newTier);
-      toast.success(`Updated ${selectedUser.username} to ${newTier.toUpperCase()} tier!`);
+      
+      // Also update localStorage for immediate reflection
+      await clientAuth.updateProfile(selectedUser.id, { tier: newTier });
+      
+      toast.dismiss(loadingToast);
+      toast.success(`🎉 Successfully updated ${selectedUser.username} to ${newTier.toUpperCase()} tier!`);
+      
       setShowEditTier(false);
       loadUsers();
+      
+      console.log(`✅ Tier updated: ${selectedUser.username} → ${newTier.toUpperCase()}`);
     } catch (error) {
-      // Fallback to localStorage update
-      console.log('⚡ Updating user tier in localStorage');
+      // Fallback to localStorage update only
+      console.log('⚡ Backend unavailable, using localStorage for tier update');
       try {
         await clientAuth.updateProfile(selectedUser.id, { tier: newTier });
-        toast.success(`Updated ${selectedUser.username} to ${newTier.toUpperCase()} tier!`);
+        
+        toast.dismiss(loadingToast);
+        toast.success(`🎉 Updated ${selectedUser.username} to ${newTier.toUpperCase()} tier!`, {
+          icon: '💾',
+          duration: 3000
+        });
+        
         setShowEditTier(false);
         loadUsers();
+        
+        console.log(`✅ Tier updated (localStorage): ${selectedUser.username} → ${newTier.toUpperCase()}`);
       } catch (localError) {
-        console.error('Update error:', localError);
-        toast.error('Failed to update user tier');
+        console.error('❌ Tier update failed:', localError);
+        toast.dismiss(loadingToast);
+        toast.error('Failed to update user tier. Please try again.');
       }
     }
   };
@@ -326,39 +350,56 @@ export default function UserManagement({ onClose }: UserManagementProps) {
                     <label className="block text-sm font-medium mb-2 text-gray-300">
                       Select New Tier
                     </label>
-                    <div className="space-y-2">
-                      {(['free', 'pro', 'vip', 'admin'] as const).map((tier) => (
-                        <label
-                          key={tier}
-                          className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                            newTier === tier
-                              ? 'border-purple-500 bg-purple-500/20'
-                              : 'border-gray-500/20 bg-spooky-bg hover:border-purple-500/50'
-                          } ${
-                            selectedUser.tier === 'admin' && tier !== 'admin'
-                              ? 'opacity-50 cursor-not-allowed'
-                              : ''
-                          }`}
-                        >
-                          <input
-                            type="radio"
-                            name="tier"
-                            value={tier}
-                            checked={newTier === tier}
-                            onChange={(e) => setNewTier(e.target.value as typeof newTier)}
-                            disabled={selectedUser.tier === 'admin' && tier !== 'admin'}
-                            className="text-purple-500"
-                          />
-                          <div className="flex items-center gap-2 flex-1">
-                            {getTierIcon(tier)}
-                            <span className="font-semibold">{tier.toUpperCase()}</span>
-                          </div>
-                          {tier === 'free' && <span className="text-xs text-gray-400">10 drawings</span>}
-                          {tier === 'pro' && <span className="text-xs text-gray-400">50 drawings</span>}
-                          {tier === 'vip' && <span className="text-xs text-gray-400">Unlimited</span>}
-                          {tier === 'admin' && <span className="text-xs text-gray-400">Full access</span>}
-                        </label>
-                      ))}
+                    <div className="space-y-4">
+                      <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 mb-4">
+                        <p className="text-sm text-blue-400">
+                          💡 Select a new tier for <strong>{selectedUser.username}</strong>
+                        </p>
+                      </div>
+
+                      <div className="space-y-3">
+                        {(['free', 'pro', 'vip', 'admin'] as const).map((tier) => (
+                          <label
+                            key={tier}
+                            className={`flex items-center justify-between gap-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${ 
+                              newTier === tier
+                                ? 'border-purple-500 bg-purple-500/10 shadow-lg shadow-purple-500/20'
+                                : 'border-gray-500/20 hover:border-purple-500/50 hover:bg-purple-500/5'
+                            } ${
+                              selectedUser.tier === 'admin' && tier !== 'admin'
+                                ? 'opacity-50 cursor-not-allowed'
+                                : ''
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <input
+                                type="radio"
+                                name="tier"
+                                value={tier}
+                                checked={newTier === tier}
+                                onChange={(e) => setNewTier(e.target.value as typeof newTier)}
+                                disabled={selectedUser.tier === 'admin' && tier !== 'admin'}
+                                className="text-purple-500 w-5 h-5"
+                              />
+                              <div className="flex items-center gap-2">
+                                {getTierIcon(tier)}
+                                <div>
+                                  <div className="font-semibold">{tier.toUpperCase()}</div>
+                                  <div className="text-xs text-gray-400">
+                                    {tier === 'free' && '10 drawings limit'}
+                                    {tier === 'pro' && '50 drawings + features'}
+                                    {tier === 'vip' && 'Unlimited + priority'}
+                                    {tier === 'admin' && 'Full system access'}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            {newTier === tier && (
+                              <CheckCircle className="text-purple-500" size={20} />
+                            )}
+                          </label>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
