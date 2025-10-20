@@ -130,23 +130,17 @@ export async function initializeSampleData(): Promise<InitializationResult> {
 
     for (const drawingData of sampleDrawings) {
       try {
-        const drawingId = `demo_drawing_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
+        // saveDrawing auto-generates: id, createdAt, updatedAt, views, likes
         localDB.saveDrawing({
-          id: drawingId,
           title: drawingData.title,
           thumbnail: drawingData.thumbnail,
-          data: drawingData.thumbnail, // Using thumbnail as data for demo
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          canvasData: drawingData.thumbnail, // Using thumbnail as canvasData for demo
           width: 800,
           height: 600,
           tags: ['demo', 'halloween'],
           isFavorite: false,
           isPublic: drawingData.isPublic,
           userId,
-          views: Math.floor(Math.random() * 100),
-          likes: Math.floor(Math.random() * 50),
         });
 
         result.drawingsCreated++;
