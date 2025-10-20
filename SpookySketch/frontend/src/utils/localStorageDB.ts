@@ -65,6 +65,11 @@ class LocalStorageDB {
     }
   }
 
+  // Get only public drawings (for gallery)
+  getPublicDrawings(): LocalDrawing[] {
+    return this.getAllDrawings().filter(d => d.isPublic === true);
+  }
+
   // Get single drawing
   getDrawing(id: string): LocalDrawing | null {
     const drawings = this.getAllDrawings();

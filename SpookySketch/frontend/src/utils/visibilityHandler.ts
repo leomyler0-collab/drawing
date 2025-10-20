@@ -46,12 +46,22 @@ export async function handleVisibilityToggle(
     // Sync with visibility DB for consistency
     await visibilityDB.setVisibility(drawingId, newStatus, userId);
     
+    // Also update localStorage for immediate reflection
+    localDB.toggleVisibility(drawingId, newStatus);
+    
+    // Dispatch custom event so gallery can refresh
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('visibilityChanged', { 
+        detail: { drawingId, isPublic: newStatus } 
+      }));
+    }
+    
     toast.dismiss(loadingToast);
     toast.success(`🎉 Drawing is now ${statusText}!`, { duration: 3000 });
     
-    if (onSuccess) onSuccess();
+    console.log(`✅ [${source}] Successfully updated ${drawingId} to ${statusText} via backend API`);
     
-    console.log(`✅ [${source}] TIER 1: Backend update successful`);
+    if (onSuccess) onSuccess();
     return true;
     
   } catch (backendError) {
@@ -71,6 +81,13 @@ export async function handleVisibilityToggle(
       
       // Sync with localStorage for complete consistency
       localDB.toggleVisibility(drawingId, newStatus);
+      
+      // Dispatch event for gallery refresh
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('visibilityChanged', { 
+          detail: { drawingId, isPublic: newStatus } 
+        }));
+      }
       
       toast.dismiss(loadingToast);
       toast.success(`🎉 Drawing is now ${statusText}!`, { 
@@ -97,6 +114,13 @@ export async function handleVisibilityToggle(
         
         if (!localResult) {
           throw new Error('Drawing not found in localStorage');
+        }
+        
+        // Dispatch event for gallery refresh
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('visibilityChanged', { 
+            detail: { drawingId, isPublic: newStatus } 
+          }));
         }
         
         toast.dismiss(loadingToast);

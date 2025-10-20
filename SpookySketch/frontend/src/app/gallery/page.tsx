@@ -39,6 +39,18 @@ export default function GalleryPage() {
   useEffect(() => {
     setIsAuthenticated(!!Cookies.get('token'));
     fetchGallery();
+    
+    // Listen for visibility changes from other components
+    const handleVisibilityChange = (event: CustomEvent) => {
+      console.log('🔄 Gallery: Detected visibility change, refreshing...', event.detail);
+      fetchGallery(); // Refresh gallery when any drawing visibility changes
+    };
+    
+    window.addEventListener('visibilityChanged', handleVisibilityChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('visibilityChanged', handleVisibilityChange as EventListener);
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -51,10 +63,9 @@ export default function GalleryPage() {
       setAllDrawings(backendDrawings);
       applyFiltersAndSort(backendDrawings);
     } catch (error) {
-      // Fallback to localStorage
+      // Fallback to localStorage - ONLY show public drawings
       console.log('⚡ Backend unavailable, using local storage for gallery');
-      const localDrawings = localDB.getAllDrawings()
-        .filter(d => d.isPublic)
+      const localDrawings = localDB.getPublicDrawings()
         .map(d => ({
           _id: d.id,
           title: d.title,
@@ -65,8 +76,10 @@ export default function GalleryPage() {
             username: d.userId ? getUsername(d.userId) : 'Anonymous',
             avatar: d.userId ? getAvatar(d.userId) : '👻'
           },
-          createdAt: d.createdAt
+          createdAt: d.createdAt,
+          isPublic: d.isPublic
         }));
+      console.log(`📊 Loaded ${localDrawings.length} public drawings from local storage`);
       setAllDrawings(localDrawings);
       applyFiltersAndSort(localDrawings);
     } finally {
