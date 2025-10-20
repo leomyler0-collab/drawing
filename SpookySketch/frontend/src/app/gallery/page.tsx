@@ -39,6 +39,7 @@ export default function GalleryPage() {
   useEffect(() => {
     setIsAuthenticated(!!Cookies.get('token'));
     fetchGallery();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchGallery = async () => {
@@ -119,6 +120,7 @@ export default function GalleryPage() {
 
   useEffect(() => {
     applyFiltersAndSort(allDrawings);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, sortBy, page, allDrawings]);
 
   const handleLike = async (drawingId: string) => {
