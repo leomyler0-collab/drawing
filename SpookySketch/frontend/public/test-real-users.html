@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpookySketch - Real Users Test Dashboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+        .section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .section h2 {
+            margin-top: 0;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 10px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 3em;
+            font-weight: bold;
+            display: block;
+            line-height: 1;
+        }
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+        .user-list, .drawing-list {
+            max-height: 300px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+        }
+        .user-item, .drawing-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+        .badge-admin { background: #dc2626; }
+        .badge-vip { background: #9333ea; }
+        .badge-pro { background: #ea580c; }
+        .badge-free { background: #6b7280; }
+        .badge-demo { background: #059669; opacity: 0.7; }
+        .badge-real { background: #3b82f6; }
+        .badge-public { background: #10b981; }
+        .badge-private { background: #6b7280; }
+        button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 5px;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        .actions {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .info-box {
+            background: rgba(59, 130, 246, 0.2);
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        .success-box {
+            background: rgba(16, 185, 129, 0.2);
+            border-left: 4px solid #10b981;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        pre {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎃 SpookySketch Real Users Dashboard</h1>
+        <p class="subtitle">Live monitoring of real users vs demo users</p>
+
+        <div class="section">
+            <h2>📊 System Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-number" id="totalUsers">0</span>
+                    <span class="stat-label">Total Users</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="realUsers">0</span>
+                    <span class="stat-label">Real Users</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="demoUsers">0</span>
+                    <span class="stat-label">Demo Users</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="totalDrawings">0</span>
+                    <span class="stat-label">Total Drawings</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="publicDrawings">0</span>
+                    <span class="stat-label">Public Drawings</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="realDrawings">0</span>
+                    <span class="stat-label">Real User Drawings</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>👥 All Users</h2>
+            <div class="info-box">
+                <strong>Real Users</strong> = Anyone who signed up through the app<br>
+                <strong>Demo Users</strong> = Auto-seeded users with @spooky.com emails
+            </div>
+            <div class="user-list" id="userList"></div>
+        </div>
+
+        <div class="section">
+            <h2>🎨 All Drawings</h2>
+            <div class="info-box">
+                Drawings are linked to users via <code>userId</code>. Gallery displays real username and avatar for each drawing.
+            </div>
+            <div class="drawing-list" id="drawingList"></div>
+        </div>
+
+        <div class="section">
+            <h2>🧪 Quick Tests</h2>
+            <div class="actions">
+                <button onclick="refreshData()">🔄 Refresh Data</button>
+                <button onclick="showRealUsersOnly()">👤 Show Real Users Only</button>
+                <button onclick="showDemoUsersOnly()">🤖 Show Demo Users Only</button>
+                <button onclick="clearDemoData()">🗑️ Clear Demo Users & Drawings</button>
+                <button onclick="exportData()">💾 Export All Data</button>
+            </div>
+            <div class="success-box" style="margin-top: 20px;">
+                <strong>✅ The system works with REAL USERS!</strong><br>
+                Demo users are just for initial content. Every signup creates a real user that appears here.
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📝 Test Instructions</h2>
+            <pre>
+1. Open site in incognito window
+2. Click "Sign Up"
+3. Create account (e.g., username: "JohnDoe", email: "john@test.com")
+4. Create a drawing
+5. Make it public
+6. Come back to this dashboard
+7. Click "Refresh Data"
+8. ✅ See your real user and drawing appear!
+            </pre>
+        </div>
+    </div>
+
+    <script>
+        function loadData() {
+            const users = JSON.parse(localStorage.getItem('spookysketch_users') || '[]');
+            const drawings = JSON.parse(localStorage.getItem('spookysketch_drawings') || '[]');
+
+            // Categorize users
+            const demoUsers = users.filter(u => u.email && u.email.endsWith('@spooky.com'));
+            const realUsers = users.filter(u => !u.email || !u.email.endsWith('@spooky.com'));
+
+            // Categorize drawings
+            const demoUserIds = demoUsers.map(u => u.id);
+            const publicDrawings = drawings.filter(d => d.isPublic);
+            const realUserDrawings = drawings.filter(d => !demoUserIds.includes(d.userId));
+
+            // Update stats
+            document.getElementById('totalUsers').textContent = users.length;
+            document.getElementById('realUsers').textContent = realUsers.length;
+            document.getElementById('demoUsers').textContent = demoUsers.length;
+            document.getElementById('totalDrawings').textContent = drawings.length;
+            document.getElementById('publicDrawings').textContent = publicDrawings.length;
+            document.getElementById('realDrawings').textContent = realUserDrawings.length;
+
+            // Display users
+            const userList = document.getElementById('userList');
+            userList.innerHTML = users.map(u => {
+                const isDemo = u.email && u.email.endsWith('@spooky.com');
+                const tierBadge = `badge-${u.tier}`;
+                const typeBadge = isDemo ? 'badge-demo' : 'badge-real';
+                return `
+                    <div class="user-item">
+                        <div>
+                            <strong>${u.avatar || '👻'} ${u.username}</strong>
+                            <div style="font-size: 0.85em; opacity: 0.8;">${u.email}</div>
+                        </div>
+                        <div>
+                            <span class="badge ${tierBadge}">${u.tier.toUpperCase()}</span>
+                            <span class="badge ${typeBadge}">${isDemo ? 'DEMO' : 'REAL'}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Display drawings
+            const drawingList = document.getElementById('drawingList');
+            drawingList.innerHTML = drawings.map(d => {
+                const author = users.find(u => u.id === d.userId);
+                const isRealUser = author && (!author.email || !author.email.endsWith('@spooky.com'));
+                const visibilityBadge = d.isPublic ? 'badge-public' : 'badge-private';
+                const typeBadge = isRealUser ? 'badge-real' : 'badge-demo';
+                return `
+                    <div class="drawing-item">
+                        <div>
+                            <strong>${d.title}</strong>
+                            <div style="font-size: 0.85em; opacity: 0.8;">
+                                by ${author ? author.username : 'Unknown'} ${author ? author.avatar : ''}
+                            </div>
+                        </div>
+                        <div>
+                            <span class="badge ${visibilityBadge}">${d.isPublic ? 'PUBLIC' : 'PRIVATE'}</span>
+                            <span class="badge ${typeBadge}">${isRealUser ? 'REAL USER' : 'DEMO USER'}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function refreshData() {
+            loadData();
+            alert('✅ Data refreshed!');
+        }
+
+        function showRealUsersOnly() {
+            const users = JSON.parse(localStorage.getItem('spookysketch_users') || '[]');
+            const realUsers = users.filter(u => !u.email || !u.email.endsWith('@spooky.com'));
+            console.log('Real Users:', realUsers);
+            alert(`Found ${realUsers.length} real users. Check console for details.`);
+        }
+
+        function showDemoUsersOnly() {
+            const users = JSON.parse(localStorage.getItem('spookysketch_users') || '[]');
+            const demoUsers = users.filter(u => u.email && u.email.endsWith('@spooky.com'));
+            console.log('Demo Users:', demoUsers);
+            alert(`Found ${demoUsers.length} demo users. Check console for details.`);
+        }
+
+        function clearDemoData() {
+            if (!confirm('⚠️ This will remove all demo users and their drawings. Continue?')) return;
+
+            const users = JSON.parse(localStorage.getItem('spookysketch_users') || '[]');
+            const drawings = JSON.parse(localStorage.getItem('spookysketch_drawings') || '[]');
+
+            // Keep only real users and admin
+            const realUsers = users.filter(u => u.tier === 'admin' || !u.email || !u.email.endsWith('@spooky.com'));
+            
+            // Keep only drawings from real users
+            const demoUserIds = users.filter(u => u.email && u.email.endsWith('@spooky.com')).map(u => u.id);
+            const realDrawings = drawings.filter(d => !demoUserIds.includes(d.userId));
+
+            localStorage.setItem('spookysketch_users', JSON.stringify(realUsers));
+            localStorage.setItem('spookysketch_drawings', JSON.stringify(realDrawings));
+
+            alert(`✅ Cleared ${users.length - realUsers.length} demo users and ${drawings.length - realDrawings.length} demo drawings!`);
+            loadData();
+        }
+
+        function exportData() {
+            const data = {
+                users: JSON.parse(localStorage.getItem('spookysketch_users') || '[]'),
+                drawings: JSON.parse(localStorage.getItem('spookysketch_drawings') || '[]'),
+                timestamp: new Date().toISOString()
+            };
+            console.log('Exported Data:', data);
+            alert('✅ Data exported to console! Open developer tools to see.');
+        }
+
+        // Load data on page load
+        loadData();
+
+        // Auto-refresh every 5 seconds
+        setInterval(loadData, 5000);
+    </script>
+</body>
+</html>
