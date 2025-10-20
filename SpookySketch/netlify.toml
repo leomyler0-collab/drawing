@@ -1,10 +1,10 @@
 # Netlify Configuration for SpookySketch
 [build]
   # Build command
-  command = "cd frontend && npm install && npm run build"
+  command = "cd SpookySketch/frontend && npm install && npm run build"
   
   # Output directory (Next.js builds to .next)
-  publish = "frontend/.next"
+  publish = "SpookySketch/frontend/.next"
   
   # Base directory
   base = ""
