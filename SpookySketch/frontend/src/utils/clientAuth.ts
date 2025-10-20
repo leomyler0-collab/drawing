@@ -280,21 +280,82 @@ class ClientAuth {
     return this.users.map(u => this.sanitizeUser(u));
   }
 
-  // Update user profile
+  // Update user profile - Enterprise grade with verification
   async updateProfile(userId: string, updates: Partial<User>): Promise<User> {
     this.ensureInitialized();
+    
+    console.log(`🔄 [ClientAuth] Updating profile for user: ${userId}`);
+    console.log(`📝 [ClientAuth] Updates:`, updates);
+    
     const index = this.users.findIndex(u => u.id === userId);
+    
     if (index === -1) {
-      throw new Error('User not found');
+      console.error(`❌ [ClientAuth] User not found: ${userId}`);
+      console.log(`📊 [ClientAuth] Available users:`, this.users.map(u => ({ id: u.id, email: u.email })));
+      throw new Error(`User not found: ${userId}`);
     }
 
+    const oldData = { ...this.users[index] };
+    
+    // Update user data
     this.users[index] = {
       ...this.users[index],
       ...updates,
     };
 
+    // Force save to localStorage
     this.saveUsers();
+    
+    // Verify save was successful
+    const verifyData = localStorage.getItem(USERS_KEY);
+    if (verifyData) {
+      const verifyUsers = JSON.parse(verifyData);
+      const verifyUser = verifyUsers.find((u: StoredUser) => u.id === userId);
+      if (verifyUser) {
+        console.log(`✅ [ClientAuth] Profile updated successfully`);
+        console.log(`   Before:`, { tier: oldData.tier });
+        console.log(`   After:`, { tier: verifyUser.tier });
+      }
+    }
+    
     return this.sanitizeUser(this.users[index]);
+  }
+
+  // Delete user - Enterprise grade
+  async deleteUser(userId: string): Promise<boolean> {
+    this.ensureInitialized();
+    
+    console.log(`🗑️ [ClientAuth] Attempting to delete user: ${userId}`);
+    
+    const userToDelete = this.users.find(u => u.id === userId);
+    
+    if (!userToDelete) {
+      console.error(`❌ [ClientAuth] User not found: ${userId}`);
+      throw new Error('User not found');
+    }
+    
+    // Prevent deletion of admin users
+    if (userToDelete.tier === 'admin') {
+      console.error(`❌ [ClientAuth] Cannot delete admin user: ${userToDelete.username}`);
+      throw new Error('Cannot delete admin users');
+    }
+    
+    const beforeCount = this.users.length;
+    
+    // Remove user
+    this.users = this.users.filter(u => u.id !== userId);
+    
+    // Save to localStorage
+    this.saveUsers();
+    
+    const afterCount = this.users.length;
+    
+    console.log(`✅ [ClientAuth] User deleted successfully`);
+    console.log(`   👤 Username: ${userToDelete.username}`);
+    console.log(`   📧 Email: ${userToDelete.email}`);
+    console.log(`   📊 Users before: ${beforeCount}, after: ${afterCount}`);
+    
+    return true;
   }
 
   // Debug: Recreate admin account (forces creation even if exists)

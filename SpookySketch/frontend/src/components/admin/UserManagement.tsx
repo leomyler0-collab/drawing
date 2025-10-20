@@ -27,20 +27,41 @@ export default function UserManagement({ onClose }: UserManagementProps) {
 
   useEffect(() => {
     loadUsers();
+    
+    // Force refresh every 5 seconds to catch external changes
+    const interval = setInterval(() => {
+      loadUsers();
+    }, 5000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const loadUsers = async () => {
+    console.log('🔄 [UserManagement] Loading users...');
+    
     try {
       // Try backend first
       const response = await adminAPI.getAllUsers();
       setUsers(response.data.users);
-      console.log('✅ Users loaded from backend');
+      console.log(`✅ [UserManagement] Loaded ${response.data.users.length} users from backend`);
     } catch (error) {
       // Fallback to localStorage (works in production without backend)
-      console.log('⚡ Using localStorage for users (production mode)');
-      const localUsers = clientAuth.getAllUsers();
-      setUsers(localUsers);
-      console.log(`✅ Loaded ${localUsers.length} users from localStorage`);
+      console.log('⚡ [UserManagement] Backend unavailable, using localStorage');
+      
+      try {
+        // Force re-initialize to ensure latest data
+        clientAuth.initialize();
+        const localUsers = clientAuth.getAllUsers();
+        setUsers(localUsers);
+        console.log(`✅ [UserManagement] Loaded ${localUsers.length} users from localStorage`);
+        console.log('   📊 User tiers:', localUsers.reduce((acc, u) => {
+          acc[u.tier] = (acc[u.tier] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>));
+      } catch (localError) {
+        console.error('❌ [UserManagement] Failed to load users:', localError);
+        toast.error('Failed to load users. Please refresh the page.');
+      }
     }
   };
 
@@ -72,16 +93,49 @@ export default function UserManagement({ onClose }: UserManagementProps) {
   };
 
   const handleDeleteUser = async (userId: string, username: string) => {
-    if (confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
+    if (!confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
+      return;
+    }
+    
+    const loadingToast = toast.loading(`Deleting user ${username}...`);
+    
+    console.log(`🗑️ [UserManagement] Deleting user: ${username} (${userId})`);
+    
+    try {
+      // Try backend first
+      await adminAPI.deleteUser(userId);
+      
+      // Also delete from localStorage
+      await clientAuth.deleteUser(userId);
+      
+      toast.dismiss(loadingToast);
+      toast.success(`✅ User "${username}" deleted successfully!`);
+      
+      console.log(`✅ [UserManagement] User deleted: ${username}`);
+      
+      // Reload users immediately
+      await loadUsers();
+    } catch (error) {
+      console.warn('⚡ [UserManagement] Backend unavailable, using localStorage delete');
+      
       try {
-        // Try backend first
-        await adminAPI.deleteUser(userId);
-        toast.success(`User "${username}" deleted successfully!`);
-        loadUsers();
-      } catch (error) {
-        // Note: User deletion from localStorage requires backend or manual implementation
-        console.warn('Cannot delete users in localStorage-only mode');
-        toast.error('User deletion requires backend connection');
+        // Fallback: Delete from localStorage directly
+        await clientAuth.deleteUser(userId);
+        
+        toast.dismiss(loadingToast);
+        toast.success(`✅ User "${username}" deleted from local storage!`, {
+          icon: '💾',
+          duration: 3000
+        });
+        
+        console.log(`✅ [UserManagement] User deleted locally: ${username}`);
+        
+        // Reload users immediately
+        await loadUsers();
+      } catch (localError: any) {
+        console.error('❌ [UserManagement] Delete failed:', localError);
+        toast.dismiss(loadingToast);
+        toast.error(localError.message || 'Failed to delete user');
       }
     }
   };
@@ -98,50 +152,65 @@ export default function UserManagement({ onClose }: UserManagementProps) {
   };
 
   const handleUpdateTier = async () => {
-    if (!selectedUser) return;
+    if (!selectedUser) {
+      console.error('❌ [UserManagement] No user selected');
+      return;
+    }
 
     if (selectedUser.tier === 'admin' && newTier !== 'admin') {
-      toast.error('Cannot change admin tier!');
+      toast.error('❌ Cannot change admin tier!');
+      return;
+    }
+
+    if (selectedUser.tier === newTier) {
+      toast.error('⚠️ User already has this tier');
       return;
     }
 
     const loadingToast = toast.loading(`Updating ${selectedUser.username} to ${newTier.toUpperCase()}...`);
+    
+    console.log(`🔄 [UserManagement] Updating tier:`);
+    console.log(`   👤 User: ${selectedUser.username} (${selectedUser.id})`);
+    console.log(`   🎯 From: ${selectedUser.tier} → To: ${newTier}`);
 
     try {
       // Try backend first
-      await adminAPI.updateUserTier(selectedUser.id, newTier);
+      try {
+        await adminAPI.updateUserTier(selectedUser.id, newTier);
+        console.log('✅ [UserManagement] Backend update successful');
+      } catch (backendError) {
+        console.log('⚡ [UserManagement] Backend unavailable, continuing with localStorage');
+      }
       
-      // Also update localStorage for immediate reflection
+      // ALWAYS update localStorage (the source of truth in production)
       await clientAuth.updateProfile(selectedUser.id, { tier: newTier });
       
-      toast.dismiss(loadingToast);
-      toast.success(`🎉 Successfully updated ${selectedUser.username} to ${newTier.toUpperCase()} tier!`);
+      // Verify the update worked
+      const updatedUsers = clientAuth.getAllUsers();
+      const verifyUser = updatedUsers.find(u => u.id === selectedUser.id);
       
-      setShowEditTier(false);
-      loadUsers();
-      
-      console.log(`✅ Tier updated: ${selectedUser.username} → ${newTier.toUpperCase()}`);
-    } catch (error) {
-      // Fallback to localStorage update only
-      console.log('⚡ Backend unavailable, using localStorage for tier update');
-      try {
-        await clientAuth.updateProfile(selectedUser.id, { tier: newTier });
+      if (verifyUser && verifyUser.tier === newTier) {
+        console.log('✅ [UserManagement] Tier update verified in localStorage');
         
         toast.dismiss(loadingToast);
-        toast.success(`🎉 Updated ${selectedUser.username} to ${newTier.toUpperCase()} tier!`, {
-          icon: '💾',
-          duration: 3000
+        toast.success(`🎉 Successfully updated ${selectedUser.username} to ${newTier.toUpperCase()} tier!`, {
+          duration: 4000
         });
         
         setShowEditTier(false);
-        loadUsers();
         
-        console.log(`✅ Tier updated (localStorage): ${selectedUser.username} → ${newTier.toUpperCase()}`);
-      } catch (localError) {
-        console.error('❌ Tier update failed:', localError);
-        toast.dismiss(loadingToast);
-        toast.error('Failed to update user tier. Please try again.');
+        // Force immediate refresh
+        await loadUsers();
+        
+        console.log(`✅ [UserManagement] Complete: ${selectedUser.username} → ${newTier.toUpperCase()}`);
+      } else {
+        throw new Error('Verification failed: Tier not updated in storage');
       }
+      
+    } catch (error: any) {
+      console.error('❌ [UserManagement] Tier update failed:', error);
+      toast.dismiss(loadingToast);
+      toast.error(error.message || 'Failed to update user tier. Please try again.');
     }
   };
 
