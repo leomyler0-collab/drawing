@@ -5,6 +5,7 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import toast from 'react-hot-toast';
 import { clientAuth, User as ClientUser } from '@/utils/clientAuth';
+import { seedDatabase } from '@/utils/dataSeeder';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 let useClientAuth = false; // Flag for graceful degradation
@@ -36,6 +37,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Initialize client auth system (including admin account)
     if (typeof window !== 'undefined') {
       clientAuth.initialize();
+      
+      // Auto-seed database with sample data on first load
+      seedDatabase().then(result => {
+        if (result.success && !result.alreadySeeded) {
+          console.log('🎉 [AuthContext] Database seeded successfully');
+          console.log(`   👥 Users: ${result.usersCreated}`);
+          console.log(`   🎨 Drawings: ${result.drawingsCreated} (${result.publicDrawingsCreated} public)`);
+        }
+      }).catch(error => {
+        console.error('❌ [AuthContext] Seeding failed:', error);
+      });
     }
     checkAuth();
   }, []);
