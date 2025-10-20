@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Demo Users - SpookySketch</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+        .stats {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+        .stat-label {
+            opacity: 0.8;
+        }
+        .stat-value {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        .warning {
+            background: rgba(220, 38, 38, 0.2);
+            border: 1px solid rgba(220, 38, 38, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .info {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .success {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        button {
+            width: 100%;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px 0;
+            transition: all 0.3s;
+        }
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #b91c1c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.5);
+        }
+        .btn-warning {
+            background: #ea580c;
+            color: white;
+        }
+        .btn-warning:hover {
+            background: #c2410c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(234, 88, 12, 0.5);
+        }
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
+        }
+        #result {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🧹 Clear Demo Users</h1>
+            <p class="subtitle">Remove fake demo users from your database</p>
+
+            <div class="stats" id="stats">
+                <div class="stat-row">
+                    <span class="stat-label">Total Users:</span>
+                    <span class="stat-value" id="totalUsers">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Demo Users:</span>
+                    <span class="stat-value" id="demoUsers">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Real Users:</span>
+                    <span class="stat-value" id="realUsers">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Demo Drawings:</span>
+                    <span class="stat-value" id="demoDrawings">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Real Drawings:</span>
+                    <span class="stat-value" id="realDrawings">0</span>
+                </div>
+            </div>
+
+            <div class="warning">
+                <strong>⚠️ Warning:</strong> Demo users are those with @spooky.com emails (ArtisticSoul, GhostPainter, etc.)
+            </div>
+
+            <button class="btn-warning" onclick="clearDemoUsers()">
+                🗑️ Clear Demo Users Only
+            </button>
+
+            <div class="info">
+                <strong>ℹ️ This will:</strong>
+                <ul>
+                    <li>Remove all users with @spooky.com emails</li>
+                    <li>Remove their drawings</li>
+                    <li>Keep admin account</li>
+                    <li>Keep all real users and their drawings</li>
+                </ul>
+            </div>
+
+            <button class="btn-danger" onclick="clearAllData()">
+                ⚠️ Clear ALL Users & Drawings
+            </button>
+
+            <div class="warning">
+                <strong>⚠️ Danger Zone:</strong> This will remove EVERYTHING except admin account!
+            </div>
+
+            <button class="btn-primary" onclick="refreshStats()">
+                🔄 Refresh Stats
+            </button>
+
+            <div id="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const USERS_KEY = 'spookysketch_users';
+        const DRAWINGS_KEY = 'spookysketch_drawings';
+        const SEEDER_FLAG_KEY = 'spookysketch_seeded';
+
+        function getStats() {
+            const usersData = localStorage.getItem(USERS_KEY);
+            const drawingsData = localStorage.getItem(DRAWINGS_KEY);
+
+            if (!usersData) {
+                return {
+                    totalUsers: 0,
+                    demoUsers: 0,
+                    realUsers: 0,
+                    totalDrawings: 0,
+                    demoDrawings: 0,
+                    realDrawings: 0
+                };
+            }
+
+            const allUsers = JSON.parse(usersData);
+            const allDrawings = drawingsData ? JSON.parse(drawingsData) : [];
+
+            const demoUsers = allUsers.filter(u => u.email && u.email.endsWith('@spooky.com'));
+            const demoUserIds = demoUsers.map(u => u.id);
+            const demoDrawings = allDrawings.filter(d => demoUserIds.includes(d.userId));
+
+            return {
+                totalUsers: allUsers.length,
+                demoUsers: demoUsers.length,
+                realUsers: allUsers.length - demoUsers.length,
+                totalDrawings: allDrawings.length,
+                demoDrawings: demoDrawings.length,
+                realDrawings: allDrawings.length - demoDrawings.length
+            };
+        }
+
+        function updateStats() {
+            const stats = getStats();
+            document.getElementById('totalUsers').textContent = stats.totalUsers;
+            document.getElementById('demoUsers').textContent = stats.demoUsers;
+            document.getElementById('realUsers').textContent = stats.realUsers;
+            document.getElementById('demoDrawings').textContent = stats.demoDrawings;
+            document.getElementById('realDrawings').textContent = stats.realDrawings;
+        }
+
+        function refreshStats() {
+            updateStats();
+            showResult('✅ Stats refreshed!', 'success');
+        }
+
+        function clearDemoUsers() {
+            if (!confirm('Remove all demo users (@spooky.com)? Real users will be kept.')) {
+                return;
+            }
+
+            const usersData = localStorage.getItem(USERS_KEY);
+            const drawingsData = localStorage.getItem(DRAWINGS_KEY);
+
+            if (!usersData) {
+                showResult('ℹ️ No users found', 'info');
+                return;
+            }
+
+            const allUsers = JSON.parse(usersData);
+            const allDrawings = drawingsData ? JSON.parse(drawingsData) : [];
+
+            const demoUsers = allUsers.filter(u => u.email && u.email.endsWith('@spooky.com'));
+            const demoUserIds = demoUsers.map(u => u.id);
+
+            const realUsers = allUsers.filter(u => u.tier === 'admin' || !u.email || !u.email.endsWith('@spooky.com'));
+            const realDrawings = allDrawings.filter(d => !demoUserIds.includes(d.userId));
+
+            localStorage.setItem(USERS_KEY, JSON.stringify(realUsers));
+            localStorage.setItem(DRAWINGS_KEY, JSON.stringify(realDrawings));
+            localStorage.removeItem(SEEDER_FLAG_KEY);
+
+            const removed = allUsers.length - realUsers.length;
+            const drawingsRemoved = allDrawings.length - realDrawings.length;
+
+            showResult(
+                `✅ Removed ${removed} demo users and ${drawingsRemoved} drawings!<br>` +
+                `👥 ${realUsers.length} users remaining<br>` +
+                `🎨 ${realDrawings.length} drawings remaining<br>` +
+                `Removed: ${demoUsers.map(u => u.username).join(', ')}`,
+                'success'
+            );
+
+            updateStats();
+        }
+
+        function clearAllData() {
+            if (!confirm('⚠️ WARNING: This will remove ALL users and drawings except admin! Continue?')) {
+                return;
+            }
+
+            if (!confirm('⚠️ Are you absolutely sure? This cannot be undone!')) {
+                return;
+            }
+
+            const usersData = localStorage.getItem(USERS_KEY);
+            const allUsers = usersData ? JSON.parse(usersData) : [];
+            const adminOnly = allUsers.filter(u => u.tier === 'admin');
+
+            localStorage.setItem(USERS_KEY, JSON.stringify(adminOnly));
+            localStorage.setItem(DRAWINGS_KEY, JSON.stringify([]));
+            localStorage.removeItem(SEEDER_FLAG_KEY);
+
+            showResult(
+                `✅ Cleared all data!<br>` +
+                `Only admin account remains.<br>` +
+                `Removed ${allUsers.length - adminOnly.length} users and all drawings.`,
+                'success'
+            );
+
+            updateStats();
+        }
+
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = type;
+            resultDiv.innerHTML = message;
+        }
+
+        // Initialize
+        updateStats();
+    </script>
+</body>
+</html>
