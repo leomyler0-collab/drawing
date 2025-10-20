@@ -38,16 +38,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (typeof window !== 'undefined') {
       clientAuth.initialize();
       
-      // Auto-seed database with sample data on first load
-      seedDatabase().then(result => {
-        if (result.success && !result.alreadySeeded) {
-          console.log('🎉 [AuthContext] Database seeded successfully');
-          console.log(`   👥 Users: ${result.usersCreated}`);
-          console.log(`   🎨 Drawings: ${result.drawingsCreated} (${result.publicDrawingsCreated} public)`);
-        }
-      }).catch(error => {
-        console.error('❌ [AuthContext] Seeding failed:', error);
-      });
+      // Optional: Auto-seed database with demo data
+      // Set ENABLE_DEMO_SEEDING to true in .env.local to enable demo users
+      const enableDemoSeeding = process.env.NEXT_PUBLIC_ENABLE_DEMO_SEEDING === 'true';
+      
+      if (enableDemoSeeding) {
+        seedDatabase().then(result => {
+          if (result.success && !result.alreadySeeded) {
+            console.log('🎉 [AuthContext] Demo database seeded');
+            console.log(`   👥 Demo Users: ${result.usersCreated}`);
+            console.log(`   🎨 Demo Drawings: ${result.drawingsCreated} (${result.publicDrawingsCreated} public)`);
+          }
+        }).catch(error => {
+          console.error('❌ [AuthContext] Demo seeding failed:', error);
+        });
+      } else {
+        console.log('ℹ️  [AuthContext] Demo seeding disabled - Production mode with real users only');
+      }
     }
     checkAuth();
   }, []);
