@@ -56,32 +56,49 @@ export default function GalleryPage() {
 
   const fetchGallery = async () => {
     setLoading(true);
+    console.log('🔄 [Gallery] Fetching gallery drawings...');
+    
     try {
       // Try backend first
       const response = await drawingAPI.gallery(page);
       const backendDrawings = response.data.drawings || [];
+      console.log(`✅ [Gallery] Loaded ${backendDrawings.length} drawings from backend`);
       setAllDrawings(backendDrawings);
       applyFiltersAndSort(backendDrawings);
     } catch (error) {
       // Fallback to localStorage - ONLY show public drawings
-      console.log('⚡ Backend unavailable, using local storage for gallery');
-      const localDrawings = localDB.getPublicDrawings()
-        .map(d => ({
+      console.log('⚡ [Gallery] Backend unavailable, using localStorage');
+      
+      try {
+        const publicDrawings = localDB.getPublicDrawings();
+        console.log(`📊 [Gallery] Found ${publicDrawings.length} public drawings in localStorage`);
+        
+        const formattedDrawings = publicDrawings.map(d => ({
           _id: d.id,
           title: d.title,
           thumbnail: d.thumbnail,
-          likes: d.likes,
-          views: d.views,
+          likes: d.likes || 0,
+          views: d.views || 0,
           userId: {
             username: d.userId ? getUsername(d.userId) : 'Anonymous',
             avatar: d.userId ? getAvatar(d.userId) : '👻'
           },
-          createdAt: d.createdAt,
-          isPublic: d.isPublic
+          createdAt: d.createdAt || new Date().toISOString(),
+          isPublic: true // Already filtered for public
         }));
-      console.log(`📊 Loaded ${localDrawings.length} public drawings from local storage`);
-      setAllDrawings(localDrawings);
-      applyFiltersAndSort(localDrawings);
+        
+        setAllDrawings(formattedDrawings);
+        applyFiltersAndSort(formattedDrawings);
+        console.log(`✅ [Gallery] Displaying ${formattedDrawings.length} public drawings`);
+        
+        if (formattedDrawings.length === 0) {
+          console.log('ℹ️ [Gallery] No public drawings found. Create and make drawings public to see them here!');
+        }
+      } catch (localError) {
+        console.error('❌ [Gallery] Error loading from localStorage:', localError);
+        setAllDrawings([]);
+        applyFiltersAndSort([]);
+      }
     } finally {
       setLoading(false);
     }
