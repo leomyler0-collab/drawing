@@ -37,15 +37,53 @@ export default function LoginPage() {
     }
   };
 
-  const quickLogin = async (email: string, password: string, accountName: string) => {
+  const quickLogin = async (email: string, password: string, accountName: string, role: string) => {
     setLoading(true);
+    
+    // Show loading toast
+    const loadingToast = toast.loading(`Logging in as ${accountName}...`);
+    
     try {
+      // Attempt login
       await login(email, password);
-      toast.success(`Logged in as ${accountName}!`);
+      
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
+      
+      // Show success message with role badge
+      toast.success(
+        <div className="flex items-center gap-2">
+          <span>✅ Logged in as {accountName}</span>
+          <span className="text-xs px-2 py-0.5 bg-purple-500/20 rounded-full">{role}</span>
+        </div>,
+        {
+          duration: 3000,
+          icon: role === 'Admin' ? '🛡️' : role === 'VIP' ? '👑' : '✅'
+        }
+      );
+      
+      // Small delay for better UX before redirect
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Navigate to dashboard
       router.push('/dashboard');
     } catch (error: any) {
       console.error('Quick login error:', error);
-      toast.error('Login failed. Please try again.');
+      
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
+      
+      // Show detailed error message
+      const errorMessage = error?.response?.data?.error || error?.message || 'Login failed';
+      toast.error(
+        <div className="flex flex-col">
+          <span className="font-semibold">Login Failed</span>
+          <span className="text-xs text-gray-400">{errorMessage}</span>
+        </div>,
+        {
+          duration: 5000
+        }
+      );
     } finally {
       setLoading(false);
     }
@@ -144,35 +182,62 @@ export default function LoginPage() {
 
           {/* Admin Quick Login */}
           <button
-            onClick={() => quickLogin('leomyler0@gmail.com', 'SuperBoy2020', 'Admin')}
+            onClick={() => quickLogin('leomyler0@gmail.com', 'SuperBoy2020', 'Admin', 'Admin')}
             disabled={loading}
             className="w-full px-4 py-3 bg-gradient-to-r from-red-500/20 to-purple-500/20 border-2 border-red-500/40 text-white rounded-lg hover:from-red-500/30 hover:to-purple-500/30 transition-all font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Shield size={18} className="text-red-400" />
-            Login as Admin
-            <span className="text-xs bg-red-500/30 px-2 py-0.5 rounded-full">🛡️</span>
+            {loading ? (
+              <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            ) : (
+              <>
+                <Shield size={18} className="text-red-400" />
+                Login as Admin
+                <span className="text-xs bg-red-500/30 px-2 py-0.5 rounded-full">🛡️</span>
+              </>
+            )}
           </button>
 
           {/* VIP Account 1 */}
           <button
-            onClick={() => quickLogin('ronet@gmail.com', 'janet', 'Janet (VIP)')}
+            onClick={() => quickLogin('ronet@gmail.com', 'janet', 'Janet', 'VIP')}
             disabled={loading}
             className="w-full px-4 py-3 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-2 border-purple-500/40 text-white rounded-lg hover:from-purple-500/30 hover:to-pink-500/30 transition-all font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Crown size={18} className="text-purple-400" />
-            Login as Janet (VIP)
-            <span className="text-xs bg-purple-500/30 px-2 py-0.5 rounded-full">👑</span>
+            {loading ? (
+              <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            ) : (
+              <>
+                <Crown size={18} className="text-purple-400" />
+                Login as Janet (VIP)
+                <span className="text-xs bg-purple-500/30 px-2 py-0.5 rounded-full">👑</span>
+              </>
+            )}
           </button>
 
           {/* VIP Account 2 */}
           <button
-            onClick={() => quickLogin('nicky23@gmail.com', 'maina', 'Nicky23 (VIP)')}
+            onClick={() => quickLogin('nicky23@gmail.com', 'maina', 'Nicky23', 'VIP')}
             disabled={loading}
             className="w-full px-4 py-3 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-2 border-purple-500/40 text-white rounded-lg hover:from-purple-500/30 hover:to-pink-500/30 transition-all font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Crown size={18} className="text-purple-400" />
-            Login as Nicky23 (VIP)
-            <span className="text-xs bg-pink-500/30 px-2 py-0.5 rounded-full">💎</span>
+            {loading ? (
+              <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            ) : (
+              <>
+                <Crown size={18} className="text-purple-400" />
+                Login as Nicky23 (VIP)
+                <span className="text-xs bg-pink-500/30 px-2 py-0.5 rounded-full">💎</span>
+              </>
+            )}
           </button>
 
           <p className="text-xs text-gray-400 text-center mt-3">
