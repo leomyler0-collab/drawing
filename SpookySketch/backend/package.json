@@ -7,7 +7,8 @@
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "seed:admin": "ts-node src/seedAdmin.ts"
+    "seed:admin": "ts-node src/seedAdmin.ts",
+    "create:vip": "node scripts/create-vip-accounts.js"
   },
   "keywords": ["express", "mongodb", "socket.io"],
   "author": "SpookySketch Team",
