@@ -110,8 +110,47 @@ mongoose
       } else {
         console.log('👑 Admin account exists and ready!');
       }
+
+      // Auto-create VIP accounts if not exist
+      const vipAccounts = [
+        {
+          username: 'Janet',
+          email: 'ronet@gmail.com',
+          password: 'janet',
+          tier: 'vip',
+          avatar: '👑'
+        },
+        {
+          username: 'Nicky23',
+          email: 'nicky23@gmail.com',
+          password: 'maina',
+          tier: 'vip',
+          avatar: '💎'
+        }
+      ];
+
+      for (const account of vipAccounts) {
+        const existingVIP = await User.findOne({ email: account.email });
+        
+        if (!existingVIP) {
+          const vipUser = new User({
+            username: account.username,
+            email: account.email,
+            password: account.password,
+            tier: account.tier,
+            avatar: account.avatar,
+            isAdmin: false,
+          });
+          await vipUser.save();
+          console.log(`💎 VIP account auto-created: ${account.email}`);
+        } else if (existingVIP.tier !== 'vip') {
+          existingVIP.tier = 'vip';
+          await existingVIP.save();
+          console.log(`💎 VIP account updated: ${account.email}`);
+        }
+      }
     } catch (error) {
-      console.warn('⚠️  Could not verify/create admin account:', error);
+      console.warn('⚠️  Could not verify/create admin/VIP accounts:', error);
     }
   })
   .catch((error) => {
