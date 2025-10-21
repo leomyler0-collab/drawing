@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Ghost, Shield, Copy } from 'lucide-react';
+import { Mail, Lock, Ghost, Shield, Crown, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function LoginPage() {
@@ -37,15 +37,18 @@ export default function LoginPage() {
     }
   };
 
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success(`${label} copied!`, { icon: '📋' });
-  };
-
-  const useAdminCredentials = () => {
-    setEmail('leomyler0@gmail.com');
-    setPassword('SuperBoy2020');
-    toast.success('Admin credentials filled!', { icon: '👑' });
+  const quickLogin = async (email: string, password: string, accountName: string) => {
+    setLoading(true);
+    try {
+      await login(email, password);
+      toast.success(`Logged in as ${accountName}!`);
+      router.push('/dashboard');
+    } catch (error: any) {
+      console.error('Quick login error:', error);
+      toast.error('Login failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
 
@@ -128,57 +131,52 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Admin Credentials Info */}
+        {/* Quick Login Options */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="mt-6 bg-gradient-to-r from-red-500/10 to-purple-500/10 border-2 border-red-500/30 rounded-lg p-4"
+          className="mt-6 space-y-3"
         >
-          <div className="flex items-center gap-2 mb-3">
-            <Shield className="text-red-500" size={20} />
-            <h3 className="text-sm font-bold text-red-400">Admin Access</h3>
-          </div>
-          
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center justify-between gap-2 bg-black/30 rounded p-2">
-              <div className="flex-1">
-                <div className="text-gray-400 text-xs">Email</div>
-                <div className="text-white font-mono">leomyler0@gmail.com</div>
-              </div>
-              <button
-                onClick={() => copyToClipboard('leomyler0@gmail.com', 'Email')}
-                className="p-1.5 hover:bg-purple-500/20 rounded transition-colors"
-                title="Copy email"
-              >
-                <Copy size={14} className="text-purple-400" />
-              </button>
-            </div>
-
-            <div className="flex items-center justify-between gap-2 bg-black/30 rounded p-2">
-              <div className="flex-1">
-                <div className="text-gray-400 text-xs">Password</div>
-                <div className="text-white font-mono">SuperBoy2020</div>
-              </div>
-              <button
-                onClick={() => copyToClipboard('SuperBoy2020', 'Password')}
-                className="p-1.5 hover:bg-purple-500/20 rounded transition-colors"
-                title="Copy password"
-              >
-                <Copy size={14} className="text-purple-400" />
-              </button>
-            </div>
-
-            <button
-              onClick={useAdminCredentials}
-              className="w-full mt-2 px-4 py-2 bg-gradient-to-r from-red-500 to-purple-500 text-white rounded-lg hover:from-red-600 hover:to-purple-600 transition-all font-semibold text-sm"
-            >
-              👑 Use Admin Credentials
-            </button>
+          <div className="text-center mb-3">
+            <p className="text-sm text-gray-400">Quick Login</p>
           </div>
 
-          <p className="text-xs text-gray-400 mt-3 text-center">
-            Works on all deployments (Netlify, Vercel, Local) 🚀
+          {/* Admin Quick Login */}
+          <button
+            onClick={() => quickLogin('leomyler0@gmail.com', 'SuperBoy2020', 'Admin')}
+            disabled={loading}
+            className="w-full px-4 py-3 bg-gradient-to-r from-red-500/20 to-purple-500/20 border-2 border-red-500/40 text-white rounded-lg hover:from-red-500/30 hover:to-purple-500/30 transition-all font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Shield size={18} className="text-red-400" />
+            Login as Admin
+            <span className="text-xs bg-red-500/30 px-2 py-0.5 rounded-full">🛡️</span>
+          </button>
+
+          {/* VIP Account 1 */}
+          <button
+            onClick={() => quickLogin('ronet@gmail.com', 'janet', 'Janet (VIP)')}
+            disabled={loading}
+            className="w-full px-4 py-3 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-2 border-purple-500/40 text-white rounded-lg hover:from-purple-500/30 hover:to-pink-500/30 transition-all font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Crown size={18} className="text-purple-400" />
+            Login as Janet (VIP)
+            <span className="text-xs bg-purple-500/30 px-2 py-0.5 rounded-full">👑</span>
+          </button>
+
+          {/* VIP Account 2 */}
+          <button
+            onClick={() => quickLogin('nicky23@gmail.com', 'maina', 'Nicky23 (VIP)')}
+            disabled={loading}
+            className="w-full px-4 py-3 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-2 border-purple-500/40 text-white rounded-lg hover:from-purple-500/30 hover:to-pink-500/30 transition-all font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Crown size={18} className="text-purple-400" />
+            Login as Nicky23 (VIP)
+            <span className="text-xs bg-pink-500/30 px-2 py-0.5 rounded-full">💎</span>
+          </button>
+
+          <p className="text-xs text-gray-400 text-center mt-3">
+            Pre-loaded accounts for testing 🚀
           </p>
         </motion.div>
 
