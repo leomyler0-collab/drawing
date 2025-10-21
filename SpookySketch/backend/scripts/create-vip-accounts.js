@@ -1,9 +1,12 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
-// MongoDB Connection
+// MongoDB Connection - uses production URI if available
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/spookysketch';
+
+console.log('🔧 Using MongoDB URI:', MONGODB_URI.replace(/\/\/([^:]+):([^@]+)@/, '//*****:*****@')); // Hide credentials in log
 
 // User Schema (matching your User model)
 const userSchema = new mongoose.Schema({

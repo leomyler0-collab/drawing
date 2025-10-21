@@ -436,4 +436,95 @@ router.patch('/drawings/:drawingId/views', authenticate, requireAdmin, async (re
   }
 });
 
+// Admin: Create VIP accounts (for deployment)
+router.post('/create-vip-accounts', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    if (!isMongoConnected()) {
+      return res.status(503).json({ error: 'Database not connected' });
+    }
+
+    const vipAccounts = [
+      {
+        username: 'Janet',
+        email: 'ronet@gmail.com',
+        password: 'janet',
+        tier: 'vip',
+        avatar: '👑'
+      },
+      {
+        username: 'Nicky23',
+        email: 'nicky23@gmail.com',
+        password: 'maina',
+        tier: 'vip',
+        avatar: '💎'
+      }
+    ];
+
+    const results = [];
+
+    for (const account of vipAccounts) {
+      // Check if user already exists
+      const existingUser = await User.findOne({
+        $or: [
+          { email: account.email },
+          { username: account.username }
+        ]
+      });
+
+      if (existingUser) {
+        // Update to VIP if not already
+        if (existingUser.tier !== 'vip') {
+          existingUser.tier = 'vip';
+          await existingUser.save();
+          results.push({
+            email: account.email,
+            username: account.username,
+            status: 'updated_to_vip',
+            message: 'Existing user upgraded to VIP'
+          });
+        } else {
+          results.push({
+            email: account.email,
+            username: account.username,
+            status: 'already_vip',
+            message: 'User already has VIP tier'
+          });
+        }
+      } else {
+        // Create new VIP user
+        const newUser = new User({
+          username: account.username,
+          email: account.email,
+          password: account.password, // Will be hashed by pre-save hook
+          tier: account.tier,
+          avatar: account.avatar,
+          isAdmin: false
+        });
+
+        await newUser.save();
+        results.push({
+          email: account.email,
+          username: account.username,
+          status: 'created',
+          message: 'VIP account created successfully'
+        });
+      }
+    }
+
+    res.json({
+      message: 'VIP accounts processed successfully',
+      results,
+      summary: {
+        total: results.length,
+        created: results.filter(r => r.status === 'created').length,
+        updated: results.filter(r => r.status === 'updated_to_vip').length,
+        existing: results.filter(r => r.status === 'already_vip').length
+      }
+    });
+  } catch (error: any) {
+    console.error('Create VIP accounts error:', error);
+    res.status(500).json({ error: error.message || 'Failed to create VIP accounts' });
+  }
+});
+
 export default router;

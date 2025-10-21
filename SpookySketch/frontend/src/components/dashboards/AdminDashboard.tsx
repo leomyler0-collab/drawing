@@ -64,6 +64,38 @@ export default function AdminDashboard({ user, drawings, stats, onDelete, onUpda
     }
   };
 
+  const handleCreateVIPAccounts = async () => {
+    if (!confirm('Create VIP accounts?\n\nThis will create:\n- ronet@gmail.com (Janet) - VIP\n- nicky23@gmail.com (Nicky23) - VIP\n\nThese accounts can be used after deployment.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/create-vip-accounts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert(`✅ VIP Accounts Created!\n\n${data.results.map((r: any) => 
+          `${r.email}: ${r.message}`
+        ).join('\n')}\n\nSummary:\n- Created: ${data.summary.created}\n- Updated: ${data.summary.updated}\n- Already VIP: ${data.summary.existing}`);
+        
+        loadAdminStats(); // Refresh stats
+        if (onUpdate) onUpdate(); // Refresh data
+      } else {
+        alert(`❌ Error: ${data.error || 'Failed to create VIP accounts'}`);
+      }
+    } catch (error) {
+      console.error('Create VIP accounts error:', error);
+      alert('❌ Failed to create VIP accounts. Check console for details.');
+    }
+  };
+
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -99,7 +131,7 @@ export default function AdminDashboard({ user, drawings, stats, onDelete, onUpda
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-3 flex-wrap">
                 <Link href="/studio">
                   <button className="px-6 py-3 rounded-lg bg-gradient-to-r from-red-500 to-orange-500 text-white hover:from-red-600 hover:to-orange-600 transition-all font-semibold">
                     <Palette className="inline mr-2" size={18} />
@@ -112,6 +144,14 @@ export default function AdminDashboard({ user, drawings, stats, onDelete, onUpda
                 >
                   <SettingsIcon className="inline mr-2" size={18} />
                   Admin Panel
+                </button>
+                <button
+                  onClick={handleCreateVIPAccounts}
+                  className="px-6 py-3 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 transition-all font-semibold"
+                  title="Create VIP accounts for deployment"
+                >
+                  <Crown className="inline mr-2" size={18} />
+                  Create VIPs
                 </button>
               </div>
             </div>
