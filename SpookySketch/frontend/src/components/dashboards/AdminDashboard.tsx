@@ -343,7 +343,14 @@ export default function AdminDashboard({ user, drawings, stats, onDelete, onUpda
         {showAnalytics && <Analytics onClose={() => setShowAnalytics(false)} />}
         {showSettings && <Settings onClose={() => setShowSettings(false)} />}
         {showSystemLogs && <SystemLogs onClose={() => setShowSystemLogs(false)} />}
-        {showBulkActions && <BulkActions onClose={() => setShowBulkActions(false)} />}
+        {showBulkActions && (
+          <BulkActions
+            onClose={() => setShowBulkActions(false)}
+            onComplete={() => {
+              if (onUpdate) onUpdate();
+            }}
+          />
+        )}
         {showCreateAccount && (
           <CreateAccount
             onClose={() => setShowCreateAccount(false)}
