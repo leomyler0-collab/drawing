@@ -142,11 +142,15 @@ mongoose
             isAdmin: false,
           });
           await vipUser.save();
-          console.log(`💎 VIP account auto-created: ${account.email}`);
+          console.log(`${account.avatar} VIP account auto-created!`);
+          console.log(`   Email: ${account.email}`);
+          console.log(`   Password: ${account.password}`);
         } else if (existingVIP.tier !== 'vip') {
           existingVIP.tier = 'vip';
           await existingVIP.save();
-          console.log(`💎 VIP account updated: ${account.email}`);
+          console.log(`${account.avatar} VIP account updated to VIP tier: ${account.email}`);
+        } else {
+          console.log(`${account.avatar} VIP account exists and ready! (${account.email})`);
         }
       }
     } catch (error) {

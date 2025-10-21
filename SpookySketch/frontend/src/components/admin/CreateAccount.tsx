@@ -96,7 +96,9 @@ export default function CreateAccount({ onClose, onSuccess }: CreateAccountProps
     const loadingToast = toast.loading(`Creating ${formData.tier.toUpperCase()} account...`);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/create-account`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      
+      const response = await fetch(`${apiUrl}/api/admin/create-account`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -109,20 +111,46 @@ export default function CreateAccount({ onClose, onSuccess }: CreateAccountProps
 
       if (response.ok) {
         toast.dismiss(loadingToast);
-        toast.success(`✅ ${data.message}`, {
-          duration: 4000
-        });
+        toast.success(
+          <div className="flex items-center gap-2">
+            <span>✅ {data.message}</span>
+            <span className="text-xs px-2 py-0.5 bg-green-500/20 rounded-full">Success</span>
+          </div>,
+          {
+            duration: 4000
+          }
+        );
         
         if (onSuccess) onSuccess();
         onClose();
       } else {
         toast.dismiss(loadingToast);
-        toast.error(`❌ ${data.error || 'Failed to create account'}`);
+        toast.error(
+          <div className="flex flex-col">
+            <span className="font-semibold">Failed to create account</span>
+            <span className="text-xs text-gray-400">{data.error || 'Unknown error'}</span>
+          </div>,
+          {
+            duration: 5000
+          }
+        );
       }
     } catch (error: any) {
       console.error('Create account error:', error);
       toast.dismiss(loadingToast);
-      toast.error('❌ Failed to create account. Check your connection.');
+      
+      // More detailed error message
+      const errorMsg = error.message || 'Network error';
+      toast.error(
+        <div className="flex flex-col">
+          <span className="font-semibold">Connection Error</span>
+          <span className="text-xs text-gray-400">{errorMsg}</span>
+          <span className="text-xs text-gray-500 mt-1">Make sure the backend is running</span>
+        </div>,
+        {
+          duration: 6000
+        }
+      );
     } finally {
       setIsSubmitting(false);
     }
