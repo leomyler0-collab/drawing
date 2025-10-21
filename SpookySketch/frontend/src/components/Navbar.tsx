@@ -40,6 +40,9 @@ export default function Navbar() {
             <Link href="/pricing" className="text-gray-300 hover:text-orange-500 transition-colors">
               Pricing
             </Link>
+            <Link href="/about" className="text-gray-300 hover:text-orange-500 transition-colors">
+              About
+            </Link>
             
             {user ? (
               <div className="flex items-center gap-4">
@@ -97,6 +100,9 @@ export default function Navbar() {
               </Link>
               <Link href="/pricing" className="block text-gray-300 hover:text-orange-500 py-2">
                 Pricing
+              </Link>
+              <Link href="/about" className="block text-gray-300 hover:text-orange-500 py-2">
+                About
               </Link>
               
               {user ? (

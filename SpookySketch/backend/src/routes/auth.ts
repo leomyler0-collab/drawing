@@ -3,7 +3,6 @@ import { body, validationResult } from 'express-validator';
 import jwt from 'jsonwebtoken';
 import User from '../models/User';
 import { authenticate, AuthRequest } from '../middleware/auth';
-import { mockAuth } from '../mockAuth';
 import mongoose from 'mongoose';
 
 const router = express.Router();
@@ -28,57 +27,49 @@ router.post(
 
       const { username, email, password } = req.body;
 
-      if (isMongoConnected()) {
-        // Use MongoDB
-        const existingUser = await User.findOne({
-          $or: [{ email }, { username }],
-        });
+      if (!isMongoConnected()) {
+        return res.status(503).json({ error: 'Database not connected. Please try again later.' });
+      }
 
-        if (existingUser) {
-          return res.status(400).json({
-            error: existingUser.email === email
-              ? 'Email already registered'
-              : 'Username already taken',
-          });
-        }
+      // Use MongoDB
+      const existingUser = await User.findOne({
+        $or: [{ email }, { username }],
+      });
 
-        const user = new User({
-          username,
-          email,
-          password,
-          tier: 'free',
-        });
-
-        await user.save();
-
-        const token = jwt.sign(
-          { userId: user._id },
-          process.env.JWT_SECRET || 'secret',
-          { expiresIn: '30d' }
-        );
-
-        res.status(201).json({
-          message: 'User created successfully',
-          token,
-          user: {
-            id: user._id,
-            username: user.username,
-            email: user.email,
-            tier: user.tier,
-            avatar: user.avatar,
-          },
-        });
-      } else {
-        // Use Mock Authentication
-        const user = await mockAuth.createUser(username, email, password);
-        const token = mockAuth.generateToken(user._id);
-
-        res.status(201).json({
-          message: 'User created successfully (Mock Mode)',
-          token,
-          user: mockAuth.sanitizeUser(user),
+      if (existingUser) {
+        return res.status(400).json({
+          error: existingUser.email === email
+            ? 'Email already registered'
+            : 'Username already taken',
         });
       }
+
+      const user = new User({
+        username,
+        email,
+        password,
+        tier: 'free',
+      });
+
+      await user.save();
+
+      const token = jwt.sign(
+        { userId: user._id },
+        process.env.JWT_SECRET || 'secret',
+        { expiresIn: '30d' }
+      );
+
+      res.status(201).json({
+        message: 'User created successfully',
+        token,
+        user: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          tier: user.tier,
+          avatar: user.avatar,
+        },
+      });
     } catch (error: any) {
       console.error('Signup error:', error);
       res.status(500).json({ error: error.message || 'Server error during signup' });
@@ -102,55 +93,38 @@ router.post(
 
       const { email, password } = req.body;
 
-      if (isMongoConnected()) {
-        // Use MongoDB
-        const user = await User.findOne({ email });
-        if (!user) {
-          return res.status(401).json({ error: 'Invalid credentials' });
-        }
-
-        const isMatch = await user.comparePassword(password);
-        if (!isMatch) {
-          return res.status(401).json({ error: 'Invalid credentials' });
-        }
-
-        const token = jwt.sign(
-          { userId: user._id },
-          process.env.JWT_SECRET || 'secret',
-          { expiresIn: '30d' }
-        );
-
-        res.json({
-          message: 'Login successful',
-          token,
-          user: {
-            id: user._id,
-            username: user.username,
-            email: user.email,
-            tier: user.tier,
-            avatar: user.avatar,
-          },
-        });
-      } else {
-        // Use Mock Authentication
-        const user = await mockAuth.findUserByEmail(email);
-        if (!user) {
-          return res.status(401).json({ error: 'Invalid credentials' });
-        }
-
-        const isMatch = await mockAuth.comparePassword(password, user.password);
-        if (!isMatch) {
-          return res.status(401).json({ error: 'Invalid credentials' });
-        }
-
-        const token = mockAuth.generateToken(user._id);
-
-        res.json({
-          message: 'Login successful (Mock Mode)',
-          token,
-          user: mockAuth.sanitizeUser(user),
-        });
+      if (!isMongoConnected()) {
+        return res.status(503).json({ error: 'Database not connected. Please try again later.' });
       }
+
+      // Use MongoDB
+      const user = await User.findOne({ email });
+      if (!user) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      const isMatch = await user.comparePassword(password);
+      if (!isMatch) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      const token = jwt.sign(
+        { userId: user._id },
+        process.env.JWT_SECRET || 'secret',
+        { expiresIn: '30d' }
+      );
+
+      res.json({
+        message: 'Login successful',
+        token,
+        user: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          tier: user.tier,
+          avatar: user.avatar,
+        },
+      });
     } catch (error) {
       console.error('Login error:', error);
       res.status(500).json({ error: 'Server error during login' });
