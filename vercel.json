@@ -1,6 +1,15 @@
 {
-  "buildCommand": "cd SpookySketch/frontend && npm ci && npm run build",
-  "outputDirectory": "SpookySketch/frontend/.next",
-  "installCommand": "echo Skipping root install",
-  "framework": null
+  "version": 2,
+  "builds": [
+    {
+      "src": "SpookySketch/frontend/package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "SpookySketch/frontend/$1"
+    }
+  ]
 }
