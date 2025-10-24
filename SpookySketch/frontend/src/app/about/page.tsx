@@ -14,16 +14,27 @@ export default function AboutPage() {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-12"
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="text-center mb-16"
           >
-            <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-orange-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+            <motion.h1 
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="text-6xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-orange-500 via-purple-500 to-pink-500 bg-clip-text text-transparent"
+            >
               About SpookySketch 🎃
-            </h1>
-            <p className="text-xl text-gray-400">
+            </motion.h1>
+            <motion.p 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="text-2xl text-gray-300 max-w-2xl mx-auto leading-relaxed"
+            >
               A professional drawing platform built with passion and creativity
-            </p>
+            </motion.p>
           </motion.div>
 
           {/* Mission Statement */}
@@ -129,23 +140,41 @@ export default function AboutPage() {
 
           {/* Special Thanks - Steff */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
-            className="spooky-card mb-8 bg-gradient-to-r from-pink-900/20 to-purple-900/20 border-2 border-pink-500/50"
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ delay: 0.35, duration: 0.6, type: "spring" }}
+            whileHover={{ scale: 1.02 }}
+            className="spooky-card mb-8 bg-gradient-to-r from-pink-900/30 to-purple-900/30 border-2 border-pink-500/60 hover:border-pink-500/80 hover:shadow-2xl hover:shadow-pink-500/30 transition-all"
           >
             <div className="text-center mb-6">
               <div className="flex justify-center mb-4">
-                <div className="p-4 bg-pink-500/20 rounded-full">
-                  <Heart className="text-pink-500" size={48} />
-                </div>
+                <motion.div 
+                  animate={{ 
+                    scale: [1, 1.2, 1],
+                    rotate: [0, 10, -10, 0]
+                  }}
+                  transition={{ 
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatDelay: 1
+                  }}
+                  className="p-4 bg-pink-500/30 rounded-full"
+                >
+                  <Heart className="text-pink-400" size={48} />
+                </motion.div>
               </div>
-              <h2 className="text-3xl font-bold mb-2">Special Thanks</h2>
+              <h2 className="text-3xl font-bold mb-2 text-pink-300">Special Thanks</h2>
             </div>
 
             <div className="bg-spooky-bg rounded-xl p-6 border border-pink-500/30">
               <div className="flex flex-col md:flex-row items-center gap-6">
-                <div className="text-6xl">💝</div>
+                <motion.div 
+                  animate={{ rotate: [0, 10, -10, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 0.5 }}
+                  className="text-7xl"
+                >
+                  💝
+                </motion.div>
                 <div className="flex-1 text-center md:text-left">
                   <h3 className="text-2xl font-bold mb-2 text-pink-400">Steff</h3>
                   <p className="text-lg text-purple-400 mb-3">Wife • Inspiration • Biggest Supporter</p>
@@ -209,10 +238,11 @@ export default function AboutPage() {
 
           {/* CTA */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="text-center spooky-card bg-gradient-to-r from-orange-900/20 via-purple-900/20 to-pink-900/20 border-2 border-purple-500/50"
+            initial={{ opacity: 0, y: 40, scale: 0.9 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2, duration: 0.6, type: "spring" }}
+            className="text-center spooky-card bg-gradient-to-r from-orange-900/30 via-purple-900/30 to-pink-900/30 border-2 border-purple-500/60 hover:border-purple-500/80 hover:shadow-2xl hover:shadow-purple-500/30 transition-all"
           >
             <h2 className="text-3xl font-bold mb-4">Start Creating Today! 🎨</h2>
             <p className="text-gray-300 mb-6">
@@ -220,14 +250,22 @@ export default function AboutPage() {
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
               <Link href="/signup">
-                <button className="px-8 py-4 rounded-lg bg-gradient-to-r from-orange-500 to-purple-500 text-white hover:from-orange-600 hover:to-purple-600 transition-all font-semibold text-lg">
+                <motion.button 
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-8 py-4 rounded-lg bg-gradient-to-r from-orange-500 to-purple-500 text-white hover:from-orange-600 hover:to-purple-600 hover:shadow-lg hover:shadow-purple-500/50 transition-all font-semibold text-lg"
+                >
                   Sign Up Free
-                </button>
+                </motion.button>
               </Link>
               <Link href="/gallery">
-                <button className="px-8 py-4 rounded-lg border-2 border-purple-500 text-purple-400 hover:bg-purple-500/10 transition-all font-semibold text-lg">
+                <motion.button 
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-8 py-4 rounded-lg border-2 border-purple-500 text-purple-400 hover:bg-purple-500/20 hover:border-purple-400 hover:shadow-lg hover:shadow-purple-500/50 transition-all font-semibold text-lg"
+                >
                   Explore Gallery
-                </button>
+                </motion.button>
               </Link>
             </div>
           </motion.div>
@@ -240,16 +278,24 @@ export default function AboutPage() {
 function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
     <motion.div
-      whileHover={{ scale: 1.02, y: -5 }}
-      className="spooky-card bg-gradient-to-br from-purple-900/10 to-transparent hover:border-purple-500/50 transition-all"
+      initial={{ opacity: 0, scale: 0.9 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true }}
+      whileHover={{ scale: 1.05, y: -8 }}
+      transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
+      className="spooky-card bg-gradient-to-br from-purple-900/20 to-transparent hover:border-purple-500/60 hover:shadow-lg hover:shadow-purple-500/20 transition-all cursor-pointer"
     >
       <div className="flex items-start gap-4">
-        <div className="p-3 bg-purple-500/20 rounded-lg text-purple-400">
+        <motion.div 
+          whileHover={{ rotate: 360, scale: 1.2 }}
+          transition={{ duration: 0.5 }}
+          className="p-3 bg-purple-500/20 rounded-lg text-purple-400"
+        >
           {icon}
-        </div>
+        </motion.div>
         <div>
-          <h3 className="text-xl font-bold mb-2">{title}</h3>
-          <p className="text-gray-400 text-sm">{description}</p>
+          <h3 className="text-xl font-bold mb-2 text-purple-200">{title}</h3>
+          <p className="text-gray-400 text-sm leading-relaxed">{description}</p>
         </div>
       </div>
     </motion.div>
@@ -258,20 +304,38 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode; titl
 
 function TechBadge({ name, color }: { name: string; color: string }) {
   return (
-    <div className={`text-center p-4 rounded-lg bg-gradient-to-r ${color} bg-opacity-10 border border-white/10 hover:border-white/30 transition-all`}>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      whileHover={{ scale: 1.1, y: -5 }}
+      whileTap={{ scale: 0.95 }}
+      transition={{ type: "spring", stiffness: 400, damping: 10 }}
+      className={`text-center p-4 rounded-lg bg-gradient-to-r ${color} bg-opacity-10 border border-white/10 hover:border-white/40 hover:shadow-lg transition-all cursor-pointer`}
+    >
       <span className="font-semibold text-white">{name}</span>
-    </div>
+    </motion.div>
   );
 }
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <motion.div
-      whileHover={{ scale: 1.05 }}
-      className="spooky-card text-center border-purple-500/30 bg-purple-900/10"
+      initial={{ opacity: 0, scale: 0.8 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true }}
+      whileHover={{ scale: 1.1, y: -10 }}
+      transition={{ type: "spring", stiffness: 300, damping: 15 }}
+      className="spooky-card text-center border-purple-500/30 bg-gradient-to-br from-purple-900/20 to-pink-900/10 hover:border-purple-500/60 hover:shadow-xl hover:shadow-purple-500/30 cursor-pointer"
     >
-      <div className="text-3xl font-bold text-purple-400 mb-1">{value}</div>
-      <div className="text-sm text-gray-400">{label}</div>
+      <motion.div 
+        initial={{ scale: 1 }}
+        whileHover={{ scale: 1.2 }}
+        className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 mb-2"
+      >
+        {value}
+      </motion.div>
+      <div className="text-sm text-gray-300 font-medium">{label}</div>
     </motion.div>
   );
 }
