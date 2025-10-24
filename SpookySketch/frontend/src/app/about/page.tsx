@@ -127,6 +127,53 @@ export default function AboutPage() {
             </div>
           </motion.div>
 
+          {/* Special Thanks - Steff */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="spooky-card mb-8 bg-gradient-to-r from-pink-900/20 to-purple-900/20 border-2 border-pink-500/50"
+          >
+            <div className="text-center mb-6">
+              <div className="flex justify-center mb-4">
+                <div className="p-4 bg-pink-500/20 rounded-full">
+                  <Heart className="text-pink-500" size={48} />
+                </div>
+              </div>
+              <h2 className="text-3xl font-bold mb-2">Special Thanks</h2>
+            </div>
+
+            <div className="bg-spooky-bg rounded-xl p-6 border border-pink-500/30">
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                <div className="text-6xl">💝</div>
+                <div className="flex-1 text-center md:text-left">
+                  <h3 className="text-2xl font-bold mb-2 text-pink-400">Steff</h3>
+                  <p className="text-lg text-purple-400 mb-3">Wife • Inspiration • Biggest Supporter</p>
+                  <p className="text-gray-300 mb-4">
+                    My beloved wife and the driving force behind this project. Her unwavering support, 
+                    encouragement, and belief in me made SpookySketch possible. Through countless late 
+                    nights of coding and debugging, she was always there with motivation, love, and understanding. 
+                    This project is as much hers as it is mine. Thank you for being my rock and my inspiration. ❤️
+                  </p>
+                  <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                    <span className="px-3 py-1 bg-pink-500/20 text-pink-400 rounded-full text-sm border border-pink-500/50">
+                      💕 Motivation
+                    </span>
+                    <span className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-sm border border-purple-500/50">
+                      ✨ Inspiration
+                    </span>
+                    <span className="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-sm border border-red-500/50">
+                      ❤️ Love
+                    </span>
+                    <span className="px-3 py-1 bg-orange-500/20 text-orange-400 rounded-full text-sm border border-orange-500/50">
+                      🌟 Support
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
           {/* Technology Stack */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}

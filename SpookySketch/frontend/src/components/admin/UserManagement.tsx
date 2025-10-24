@@ -37,31 +37,36 @@ export default function UserManagement({ onClose }: UserManagementProps) {
   }, []);
 
   const loadUsers = async () => {
-    console.log('🔄 [UserManagement] Loading users...');
+    console.log('🔄 [UserManagement] Loading ALL users from database...');
     
     try {
-      // Try backend first
+      // Fetch ALL users from MongoDB (visible across all browsers and networks)
       const response = await adminAPI.getAllUsers();
-      setUsers(response.data.users);
-      console.log(`✅ [UserManagement] Loaded ${response.data.users.length} users from backend`);
-    } catch (error) {
-      // Fallback to localStorage (works in production without backend)
-      console.log('⚡ [UserManagement] Backend unavailable, using localStorage');
+      const allUsers = response.data.users || [];
       
-      try {
-        // Force re-initialize to ensure latest data
-        clientAuth.initialize();
-        const localUsers = clientAuth.getAllUsers();
-        setUsers(localUsers);
-        console.log(`✅ [UserManagement] Loaded ${localUsers.length} users from localStorage`);
-        console.log('   📊 User tiers:', localUsers.reduce((acc, u) => {
-          acc[u.tier] = (acc[u.tier] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>));
-      } catch (localError) {
-        console.error('❌ [UserManagement] Failed to load users:', localError);
-        toast.error('Failed to load users. Please refresh the page.');
+      setUsers(allUsers);
+      console.log(`✅ [UserManagement] Loaded ${allUsers.length} users from MongoDB`);
+      console.log('   📊 User breakdown by tier:', allUsers.reduce((acc: Record<string, number>, u: User) => {
+        acc[u.tier] = (acc[u.tier] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>));
+      
+      if (allUsers.length === 0) {
+        toast('No users found in database', { icon: '📭' });
       }
+    } catch (error: any) {
+      console.error('❌ [UserManagement] Failed to load users:', error);
+      setUsers([]);
+      
+      const errorMsg = error?.response?.data?.error || error?.message || 'Failed to connect to backend';
+      toast.error(
+        <div className="flex flex-col">
+          <span className="font-semibold">Cannot Load Users</span>
+          <span className="text-xs text-gray-400">{errorMsg}</span>
+          <span className="text-xs text-gray-500 mt-1">Make sure backend is running and MongoDB is connected</span>
+        </div>,
+        { duration: 6000 }
+      );
     }
   };
 
