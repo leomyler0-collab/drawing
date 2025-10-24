@@ -355,11 +355,15 @@ export default function GalleryPage() {
                         </button>
                       </div>
 
-                      <div className="relative aspect-video bg-spooky-bg rounded-lg overflow-hidden mb-4">
+                      <div className="relative aspect-video bg-gray-900/50 rounded-lg overflow-hidden mb-4 flex items-center justify-center">
                         <img
-                          src={selectedDrawing.thumbnail}
+                          src={selectedDrawing.thumbnail || '/placeholder.png'}
                           alt={selectedDrawing.title}
-                          className="w-full h-full object-contain"
+                          className="max-w-full max-h-full object-contain"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = '/placeholder.png';
+                          }}
                         />
                       </div>
 
@@ -479,13 +483,17 @@ function GalleryCard({
       )}
 
       <div 
-        className="aspect-square rounded-lg overflow-hidden mb-3 bg-spooky-bg cursor-pointer"
+        className="aspect-square rounded-lg overflow-hidden mb-3 bg-spooky-bg cursor-pointer relative"
         onClick={() => onView(drawing)}
       >
         <img
-          src={drawing.thumbnail}
+          src={drawing.thumbnail || '/placeholder.png'}
           alt={drawing.title}
-          className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
+          className="w-full h-full object-contain hover:scale-110 transition-transform duration-300"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = '/placeholder.png';
+          }}
         />
       </div>
 

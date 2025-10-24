@@ -10,6 +10,11 @@ import Navbar from '@/components/Navbar';
 import { User } from '@/types';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import axios from 'axios';
+import Cookies from 'js-cookie';
+import { localDB } from '@/utils/localStorageDB';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 interface UnifiedDashboardProps {
   user: User;
@@ -23,9 +28,42 @@ export default function UnifiedDashboard({ user, drawings, stats, onDelete, onUp
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const handleToggleVisibility = async (drawingId: string, currentVisibility: boolean) => {
-    // Implement visibility toggle
-    toast.success(currentVisibility ? 'Drawing made private' : 'Drawing made public');
-    onUpdate();
+    const newVisibility = !currentVisibility;
+    const token = Cookies.get('token');
+    
+    try {
+      // Try backend first
+      await axios.patch(
+        `${API_URL}/api/drawings/${drawingId}/visibility`,
+        { isPublic: newVisibility },
+        { 
+          headers: { Authorization: `Bearer ${token}` },
+          timeout: 3000
+        }
+      );
+      
+      toast.success(newVisibility ? '✅ Drawing is now public!' : '🔒 Drawing is now private');
+      
+      // Dispatch event for gallery to refresh
+      window.dispatchEvent(new CustomEvent('visibilityChanged', { 
+        detail: { drawingId, isPublic: newVisibility }
+      }));
+      
+      onUpdate();
+    } catch (error) {
+      // Fallback to localStorage
+      console.log('⚡ Backend unavailable, updating localStorage');
+      localDB.toggleVisibility(drawingId, newVisibility);
+      
+      toast.success(newVisibility ? '✅ Drawing is now public! (local)' : '🔒 Drawing is now private (local)');
+      
+      // Dispatch event for gallery to refresh
+      window.dispatchEvent(new CustomEvent('visibilityChanged', { 
+        detail: { drawingId, isPublic: newVisibility }
+      }));
+      
+      onUpdate();
+    }
   };
 
   // Animation variants

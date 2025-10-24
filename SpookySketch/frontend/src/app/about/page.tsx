@@ -92,114 +92,224 @@ export default function AboutPage() {
             </div>
           </motion.div>
 
-          {/* Developer Section */}
+          {/* Developer & Inspiration Section - Side by Side */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="spooky-card mb-8 bg-gradient-to-r from-orange-900/20 to-red-900/20 border-2 border-orange-500/50"
+            transition={{ delay: 0.3, duration: 0.8, ease: [0.6, -0.05, 0.01, 0.99] }}
+            className="mb-8"
           >
-            <div className="text-center mb-6">
-              <div className="flex justify-center mb-4">
-                <div className="p-4 bg-orange-500/20 rounded-full">
-                  <Code className="text-orange-500" size={48} />
+            <h2 className="text-4xl font-bold mb-8 text-center bg-gradient-to-r from-orange-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+              Meet the Team ✨
+            </h2>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Jay - Developer */}
+              <motion.div
+                initial={{ opacity: 0, x: -50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4, duration: 0.6, type: "spring", stiffness: 100 }}
+                whileHover={{ scale: 1.03, y: -5 }}
+                className="spooky-card bg-gradient-to-br from-orange-900/30 to-red-900/20 border-2 border-orange-500/50 hover:border-orange-400/70 hover:shadow-2xl hover:shadow-orange-500/30 transition-all duration-300"
+              >
+                <div className="text-center mb-4">
+                  <motion.div 
+                    animate={{ 
+                      rotate: [0, 5, -5, 0],
+                      scale: [1, 1.05, 1]
+                    }}
+                    transition={{ 
+                      duration: 3,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                    className="inline-block p-4 bg-orange-500/20 rounded-full mb-3"
+                  >
+                    <Code className="text-orange-400" size={40} />
+                  </motion.div>
+                  <motion.div 
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="text-7xl mb-2"
+                  >
+                    👨‍💻
+                  </motion.div>
                 </div>
-              </div>
-              <h2 className="text-3xl font-bold mb-2">Meet the Developer</h2>
-            </div>
 
-            <div className="bg-spooky-bg rounded-xl p-6 border border-orange-500/30">
-              <div className="flex flex-col md:flex-row items-center gap-6">
-                <div className="text-6xl">👨‍💻</div>
-                <div className="flex-1 text-center md:text-left">
-                  <h3 className="text-2xl font-bold mb-2 text-orange-400">Jayden Mbaria</h3>
-                  <p className="text-lg text-purple-400 mb-3">Owner • Founder • Developer</p>
-                  <p className="text-gray-300 mb-4">
-                    Full-stack developer passionate about creating beautiful, functional web applications. 
-                    Built SpookySketch from the ground up using modern technologies including Next.js, 
-                    React, TypeScript, Node.js, MongoDB, and real-time collaboration features.
+                <div className="text-center">
+                  <motion.h3 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.6 }}
+                    className="text-3xl font-bold mb-2 text-orange-300"
+                  >
+                    Jayden Mbaria
+                  </motion.h3>
+                  <p className="text-lg text-purple-400 mb-4">Owner • Founder • Developer</p>
+                  <p className="text-gray-300 mb-6 leading-relaxed">
+                    Full-stack developer with a passion for creating beautiful, functional web applications. 
+                    Built SpookySketch from scratch using cutting-edge technologies to deliver an amazing drawing experience.
                   </p>
-                  <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-                    <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm border border-blue-500/50">
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    <motion.span 
+                      whileHover={{ scale: 1.15, y: -3 }}
+                      className="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-sm border border-blue-500/50"
+                    >
                       Next.js
-                    </span>
-                    <span className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-sm border border-purple-500/50">
+                    </motion.span>
+                    <motion.span 
+                      whileHover={{ scale: 1.15, y: -3 }}
+                      className="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-sm border border-purple-500/50"
+                    >
                       TypeScript
-                    </span>
-                    <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm border border-green-500/50">
+                    </motion.span>
+                    <motion.span 
+                      whileHover={{ scale: 1.15, y: -3 }}
+                      className="px-3 py-1 bg-green-500/20 text-green-300 rounded-full text-sm border border-green-500/50"
+                    >
                       MongoDB
-                    </span>
-                    <span className="px-3 py-1 bg-orange-500/20 text-orange-400 rounded-full text-sm border border-orange-500/50">
+                    </motion.span>
+                    <motion.span 
+                      whileHover={{ scale: 1.15, y: -3 }}
+                      className="px-3 py-1 bg-orange-500/20 text-orange-300 rounded-full text-sm border border-orange-500/50"
+                    >
                       Node.js
-                    </span>
+                    </motion.span>
                   </div>
                 </div>
-              </div>
-            </div>
-          </motion.div>
+              </motion.div>
 
-          {/* Special Thanks - Steff */}
-          <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ delay: 0.35, duration: 0.6, type: "spring" }}
-            whileHover={{ scale: 1.02 }}
-            className="spooky-card mb-8 bg-gradient-to-r from-pink-900/30 to-purple-900/30 border-2 border-pink-500/60 hover:border-pink-500/80 hover:shadow-2xl hover:shadow-pink-500/30 transition-all"
-          >
-            <div className="text-center mb-6">
-              <div className="flex justify-center mb-4">
-                <motion.div 
-                  animate={{ 
-                    scale: [1, 1.2, 1],
-                    rotate: [0, 10, -10, 0]
-                  }}
-                  transition={{ 
-                    duration: 2,
-                    repeat: Infinity,
-                    repeatDelay: 1
-                  }}
-                  className="p-4 bg-pink-500/30 rounded-full"
-                >
-                  <Heart className="text-pink-400" size={48} />
-                </motion.div>
-              </div>
-              <h2 className="text-3xl font-bold mb-2 text-pink-300">Special Thanks</h2>
-            </div>
+              {/* Steff - Inspiration */}
+              <motion.div
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5, duration: 0.6, type: "spring", stiffness: 100 }}
+                whileHover={{ scale: 1.03, y: -5 }}
+                className="spooky-card bg-gradient-to-br from-pink-900/40 to-purple-900/30 border-2 border-pink-500/60 hover:border-pink-400/80 hover:shadow-2xl hover:shadow-pink-500/40 transition-all duration-300 relative overflow-hidden"
+              >
+                {/* Floating hearts background */}
+                <div className="absolute inset-0 pointer-events-none">
+                  {[...Array(5)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      animate={{
+                        y: [-20, -100],
+                        opacity: [0, 0.6, 0],
+                        x: [0, (i - 2) * 20]
+                      }}
+                      transition={{
+                        duration: 4,
+                        repeat: Infinity,
+                        delay: i * 0.8,
+                        ease: "easeOut"
+                      }}
+                      className="absolute bottom-0 text-2xl"
+                      style={{ left: `${20 + i * 15}%` }}
+                    >
+                      ❤️
+                    </motion.div>
+                  ))}
+                </div>
 
-            <div className="bg-spooky-bg rounded-xl p-6 border border-pink-500/30">
-              <div className="flex flex-col md:flex-row items-center gap-6">
-                <motion.div 
-                  animate={{ rotate: [0, 10, -10, 0] }}
-                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 0.5 }}
-                  className="text-7xl"
-                >
-                  💝
-                </motion.div>
-                <div className="flex-1 text-center md:text-left">
-                  <h3 className="text-2xl font-bold mb-2 text-pink-400">Steff</h3>
-                  <p className="text-lg text-purple-400 mb-3">Wife • Inspiration • Biggest Supporter</p>
-                  <p className="text-gray-300 mb-4">
-                    My beloved wife and the driving force behind this project. Her unwavering support, 
-                    encouragement, and belief in me made SpookySketch possible. Through countless late 
-                    nights of coding and debugging, she was always there with motivation, love, and understanding. 
-                    This project is as much hers as it is mine. Thank you for being my rock and my inspiration. ❤️
-                  </p>
-                  <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-                    <span className="px-3 py-1 bg-pink-500/20 text-pink-400 rounded-full text-sm border border-pink-500/50">
-                      💕 Motivation
-                    </span>
-                    <span className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-sm border border-purple-500/50">
+                <div className="text-center mb-4 relative z-10">
+                  <motion.div 
+                    animate={{ 
+                      scale: [1, 1.2, 1],
+                      rotate: [0, -5, 5, 0]
+                    }}
+                    transition={{ 
+                      duration: 2.5,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                    className="inline-block p-4 bg-pink-500/30 rounded-full mb-3 shadow-lg shadow-pink-500/30"
+                  >
+                    <Heart className="text-pink-300" size={40} fill="currentColor" />
+                  </motion.div>
+                  <motion.div 
+                    animate={{ 
+                      scale: [1, 1.15, 1],
+                      rotate: [0, 10, -10, 0]
+                    }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                    className="text-7xl mb-2"
+                  >
+                    💝
+                  </motion.div>
+                </div>
+
+                <div className="text-center relative z-10">
+                  <motion.h3 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.7 }}
+                    className="text-3xl font-bold mb-2 text-pink-300"
+                  >
+                    Steff ✨
+                  </motion.h3>
+                  <motion.p 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.8 }}
+                    className="text-lg text-purple-300 mb-4 font-medium"
+                  >
+                    Girlfriend • Muse • Biggest Supporter
+                  </motion.p>
+                  <motion.p 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.9 }}
+                    className="text-gray-200 mb-6 leading-relaxed"
+                  >
+                    My beautiful girlfriend and the heart behind this project. Her endless love, unwavering belief, 
+                    and constant encouragement turned late nights into magical moments. Every line of code carries 
+                    her inspiration. She's my rock, my joy, and the reason I push harder every day. This project 
+                    exists because of her light in my life. Forever grateful for you, my love. 💖
+                  </motion.p>
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    <motion.span 
+                      whileHover={{ scale: 1.15, y: -3 }}
+                      animate={{ 
+                        boxShadow: ["0 0 0px rgba(236, 72, 153, 0)", "0 0 20px rgba(236, 72, 153, 0.3)", "0 0 0px rgba(236, 72, 153, 0)"]
+                      }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="px-3 py-1 bg-pink-500/30 text-pink-200 rounded-full text-sm border border-pink-400/60 font-medium"
+                    >
+                      💕 True Love
+                    </motion.span>
+                    <motion.span 
+                      whileHover={{ scale: 1.15, y: -3 }}
+                      animate={{ 
+                        boxShadow: ["0 0 0px rgba(168, 85, 247, 0)", "0 0 20px rgba(168, 85, 247, 0.3)", "0 0 0px rgba(168, 85, 247, 0)"]
+                      }}
+                      transition={{ duration: 2, repeat: Infinity, delay: 0.3 }}
+                      className="px-3 py-1 bg-purple-500/30 text-purple-200 rounded-full text-sm border border-purple-400/60 font-medium"
+                    >
                       ✨ Inspiration
-                    </span>
-                    <span className="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-sm border border-red-500/50">
-                      ❤️ Love
-                    </span>
-                    <span className="px-3 py-1 bg-orange-500/20 text-orange-400 rounded-full text-sm border border-orange-500/50">
-                      🌟 Support
-                    </span>
+                    </motion.span>
+                    <motion.span 
+                      whileHover={{ scale: 1.15, y: -3 }}
+                      animate={{ 
+                        boxShadow: ["0 0 0px rgba(239, 68, 68, 0)", "0 0 20px rgba(239, 68, 68, 0.3)", "0 0 0px rgba(239, 68, 68, 0)"]
+                      }}
+                      transition={{ duration: 2, repeat: Infinity, delay: 0.6 }}
+                      className="px-3 py-1 bg-red-500/30 text-red-200 rounded-full text-sm border border-red-400/60 font-medium"
+                    >
+                      ❤️ Forever
+                    </motion.span>
+                    <motion.span 
+                      whileHover={{ scale: 1.15, y: -3 }}
+                      animate={{ 
+                        boxShadow: ["0 0 0px rgba(251, 146, 60, 0)", "0 0 20px rgba(251, 146, 60, 0.3)", "0 0 0px rgba(251, 146, 60, 0)"]
+                      }}
+                      transition={{ duration: 2, repeat: Infinity, delay: 0.9 }}
+                      className="px-3 py-1 bg-orange-500/30 text-orange-200 rounded-full text-sm border border-orange-400/60 font-medium"
+                    >
+                      🌟 My Everything
+                    </motion.span>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             </div>
           </motion.div>
 
