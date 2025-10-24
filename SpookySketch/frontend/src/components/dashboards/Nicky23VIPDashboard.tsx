@@ -55,7 +55,7 @@ export default function Nicky23VIPDashboard({ user, drawings, stats, onDelete, o
                   </div>
                   <div>
                     <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                      Nicky23's Diamond Studio
+                      Nicky23&apos;s Diamond Studio
                     </h1>
                     <p className="text-gray-300 text-lg">{user.email}</p>
                     <div className="flex items-center gap-3 mt-2">
@@ -267,14 +267,14 @@ export default function Nicky23VIPDashboard({ user, drawings, stats, onDelete, o
                         </button>
                       </Link>
                       <button
-                        onClick={() => handleToggleVisibility(drawing.id, drawing.isPublic)}
+                        onClick={() => drawing.id && handleToggleVisibility(drawing.id, drawing.isPublic || false)}
                         className="px-3 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
                         title={drawing.isPublic ? 'Make Private' : 'Make Public'}
                       >
                         {drawing.isPublic ? <LockIcon size={14} /> : <Globe size={14} />}
                       </button>
                       <button
-                        onClick={() => onDelete(drawing.id)}
+                        onClick={() => drawing.id && onDelete(drawing.id)}
                         className="px-3 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
                       >
                         <Trash2 size={14} />
