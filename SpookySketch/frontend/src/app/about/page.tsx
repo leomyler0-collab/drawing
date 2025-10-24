@@ -263,7 +263,7 @@ export default function AboutPage() {
                   >
                     My beautiful girlfriend and the heart behind this project. Her endless love, unwavering belief, 
                     and constant encouragement turned late nights into magical moments. Every line of code carries 
-                    her inspiration. She's my rock, my joy, and the reason I push harder every day. This project 
+                    her inspiration. She&apos;s my rock, my joy, and the reason I push harder every day. This project 
                     exists because of her light in my life. Forever grateful for you, my love. 💖
                   </motion.p>
                   <div className="flex flex-wrap gap-2 justify-center">
