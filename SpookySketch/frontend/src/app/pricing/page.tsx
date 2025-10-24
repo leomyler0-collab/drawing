@@ -1,261 +1,311 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
-import { Check, Sparkles, Crown, Zap } from 'lucide-react';
+import { Check, Sparkles, Zap, Crown, Star, Heart, Palette, Image } from 'lucide-react';
+import Link from 'next/link';
 import Navbar from '@/components/Navbar';
-import axios from 'axios';
-import Cookies from 'js-cookie';
-import toast from 'react-hot-toast';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export default function PricingPage() {
-  const { user } = useAuth();
-  const [loading, setLoading] = useState<string | null>(null);
+  const features = [
+    'Unlimited Drawings',
+    'All Drawing Tools',
+    'Cloud Storage',
+    'Public Gallery Access',
+    'Full Canvas Features',
+    'Export in Multiple Formats',
+    'No Watermarks',
+    'Community Features',
+    'Real-time Autosave',
+    'Unlimited Layers',
+    'Advanced Brush Settings',
+    'Color Palettes'
+  ];
 
-  const handleUpgrade = async (tier: 'pro' | 'vip') => {
-    if (!user) {
-      toast.error('Please login first');
-      return;
-    }
-
-    // Admin already has full access
-    if (user.tier === 'admin') {
-      toast.success('You already have full access as an admin! 🛡️');
-      return;
-    }
-
-    setLoading(tier);
-
-    try {
-      const token = Cookies.get('token');
-      const response = await axios.post(
-        `${API_URL}/api/subscription/create-checkout-session`,
-        { tier },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      if (response.data.url) {
-        window.location.href = response.data.url;
-      }
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to create checkout session');
-    } finally {
-      setLoading(null);
+  const floatingAnimation = {
+    y: [0, -20, 0],
+    transition: {
+      duration: 3,
+      repeat: Infinity,
+      ease: "easeInOut"
     }
   };
 
+  const sparkleAnimation = (delay: number) => ({
+    scale: [1, 1.5, 1],
+    opacity: [0.5, 1, 0.5],
+    rotate: [0, 180, 360],
+    transition: {
+      duration: 2,
+      repeat: Infinity,
+      delay
+    }
+  });
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/30 to-gray-900">
       <Navbar />
-
-      <div className="pt-32 pb-20 px-4">
+      
+      <div className="pt-24 pb-16 px-4">
         <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-16">
+          {/* Hero Section */}
+          <motion.div
+            initial={{ opacity: 0, y: -30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-16"
+          >
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+              animate={floatingAnimation}
+              className="mb-6"
             >
-              <h1 className="text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-orange-500 to-purple-500 bg-clip-text text-transparent">
-                Choose Your Plan 🎃
-              </h1>
-              <p className="text-xl text-gray-400">
-                Unlock your full creative potential with our premium tiers
-              </p>
+              <div className="relative inline-block">
+                <motion.div
+                  animate={{
+                    rotate: 360,
+                  }}
+                  transition={{
+                    duration: 20,
+                    repeat: Infinity,
+                    ease: "linear"
+                  }}
+                  className="absolute inset-0 blur-3xl opacity-50"
+                >
+                  <div className="w-32 h-32 mx-auto bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 rounded-full" />
+                </motion.div>
+                <Sparkles className="w-24 h-24 text-yellow-400 mx-auto relative z-10" />
+              </div>
             </motion.div>
-          </div>
 
-          {/* Pricing Cards */}
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Free Tier */}
-            <PricingCard
-              title="Free"
-              price="$0"
-              period="forever"
-              icon={<Sparkles size={40} />}
-              features={[
-                '1 saved drawing',
-                'Basic brushes',
-                'Standard canvas',
-                'Export as PNG',
-                'Community gallery access',
-              ]}
-              buttonText="Current Plan"
-              buttonDisabled={user?.tier === 'free'}
-              popular={false}
-            />
+            <motion.h1
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="text-6xl md:text-7xl font-bold mb-6"
+            >
+              <span className="bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent">
+                100% FREE
+              </span>
+            </motion.h1>
 
-            {/* Pro Tier */}
-            <PricingCard
-              title="Pro"
-              price="$4.99"
-              period="/month"
-              icon={<Zap size={40} />}
-              features={[
-                '50 saved drawings',
-                'Advanced brushes & tools',
-                'Layer system',
-                'Cloud storage',
-                'Export as PNG, JPEG, SVG',
-                'Priority support',
-                'No watermarks',
-              ]}
-              buttonText={
-                user?.tier === 'admin' ? 'Admin Has Full Access ✓' :
-                user?.tier === 'pro' ? 'Current Plan' : 
-                'Upgrade to Pro'
-              }
-              buttonDisabled={user?.tier === 'pro' || user?.tier === 'admin' || user?.tier === 'vip'}
-              buttonAction={() => handleUpgrade('pro')}
-              loading={loading === 'pro'}
-              popular={true}
-            />
+            <motion.h2
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="text-3xl md:text-4xl font-bold text-white mb-4"
+            >
+              Everything. Unlimited. Forever.
+            </motion.h2>
 
-            {/* VIP Tier */}
-            <PricingCard
-              title="VIP"
-              price="$9.99"
-              period="/month"
-              icon={<Crown size={40} />}
-              features={[
-                'Unlimited drawings',
-                'All Pro features',
-                'Special Halloween brushes',
-                'Real-time collaboration',
-                'Priority server access',
-                'Early access to new features',
-                'VIP badge',
-                'Exclusive templates',
-              ]}
-              buttonText={
-                user?.tier === 'admin' ? 'Admin Has Full Access ✓' :
-                user?.tier === 'vip' ? 'Current Plan' : 
-                'Upgrade to VIP'
-              }
-              buttonDisabled={user?.tier === 'vip' || user?.tier === 'admin'}
-              buttonAction={() => handleUpgrade('vip')}
-              loading={loading === 'vip'}
-              popular={false}
-              gradient={true}
-            />
-          </div>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="text-xl text-gray-300 max-w-2xl mx-auto mb-8"
+            >
+              No tiers, no limits, no hidden fees. Every single feature is available to everyone, completely free!
+            </motion.p>
 
-          {/* FAQ Section */}
-          <div className="mt-20">
-            <h2 className="text-3xl font-bold text-center mb-10 text-orange-500">
-              Frequently Asked Questions 👻
-            </h2>
-            <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-              <FAQItem
-                question="Can I cancel anytime?"
-                answer="Yes! You can cancel your subscription at any time. You'll keep access until the end of your billing period."
-              />
-              <FAQItem
-                question="Do you offer refunds?"
-                answer="We offer a 7-day money-back guarantee if you're not satisfied with your subscription."
-              />
-              <FAQItem
-                question="Can I upgrade from Pro to VIP?"
-                answer="Absolutely! You can upgrade at any time and only pay the prorated difference."
-              />
-              <FAQItem
-                question="What payment methods do you accept?"
-                answer="We accept all major credit cards through Stripe, including Visa, Mastercard, and American Express."
-              />
+            {/* Animated badges */}
+            <div className="flex flex-wrap justify-center gap-4 mb-8">
+              {['No Credit Card', 'No Signup Fees', 'Unlimited Access', 'Always Free'].map((badge, i) => (
+                <motion.span
+                  key={badge}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.7 + i * 0.1 }}
+                  whileHover={{ scale: 1.1, y: -5 }}
+                  className="px-6 py-3 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-2 border-green-500/50 rounded-full text-green-300 font-semibold"
+                >
+                  ✓ {badge}
+                </motion.span>
+              ))}
             </div>
-          </div>
+          </motion.div>
+
+          {/* Main Free Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.8 }}
+            className="relative max-w-4xl mx-auto"
+          >
+            {/* Animated background glow */}
+            <motion.div
+              animate={{
+                opacity: [0.3, 0.6, 0.3],
+                scale: [1, 1.1, 1],
+              }}
+              transition={{
+                duration: 4,
+                repeat: Infinity,
+              }}
+              className="absolute inset-0 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 blur-3xl opacity-30 rounded-3xl"
+            />
+
+            {/* Sparkles around card */}
+            {[...Array(8)].map((_, i) => (
+              <motion.div
+                key={i}
+                animate={sparkleAnimation(i * 0.2)}
+                className="absolute"
+                style={{
+                  top: `${20 + Math.sin(i * Math.PI / 4) * 40}%`,
+                  left: `${50 + Math.cos(i * Math.PI / 4) * 45}%`,
+                }}
+              >
+                <Star className="text-yellow-400" size={20} />
+              </motion.div>
+            ))}
+
+            <div className="relative spooky-card border-4 border-purple-500/60 hover:border-purple-400 transition-all overflow-hidden">
+              {/* Animated gradient overlay */}
+              <motion.div
+                animate={{
+                  backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+                }}
+                transition={{
+                  duration: 5,
+                  repeat: Infinity,
+                }}
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-purple-500/10 to-transparent"
+                style={{ backgroundSize: "200% 200%" }}
+              />
+
+              <div className="relative z-10 p-12">
+                {/* Header */}
+                <div className="text-center mb-12">
+                  <motion.div
+                    animate={{
+                      rotate: [0, 10, -10, 0],
+                      scale: [1, 1.2, 1],
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                    }}
+                    className="inline-block mb-4"
+                  >
+                    <Crown className="w-16 h-16 text-yellow-400 mx-auto" />
+                  </motion.div>
+
+                  <h3 className="text-4xl font-bold mb-3 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+                    The Only Plan You Need
+                  </h3>
+
+                  <div className="flex items-center justify-center gap-3 mb-2">
+                    <motion.span
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ duration: 1, repeat: Infinity }}
+                      className="text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400"
+                    >
+                      $0
+                    </motion.span>
+                    <span className="text-2xl text-gray-400">/month</span>
+                  </div>
+
+                  <p className="text-lg text-gray-300">
+                    <strong className="text-green-400">Forever Free</strong> - No catches, no tricks!
+                  </p>
+                </div>
+
+                {/* Features Grid */}
+                <div className="grid md:grid-cols-2 gap-4 mb-12">
+                  {features.map((feature, index) => (
+                    <motion.div
+                      key={feature}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.8 + index * 0.05 }}
+                      whileHover={{ scale: 1.05, x: 5 }}
+                      className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/30 rounded-lg hover:bg-green-500/20 transition-all"
+                    >
+                      <motion.div
+                        animate={{ rotate: [0, 360] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                      >
+                        <Check className="text-green-400 flex-shrink-0" size={24} />
+                      </motion.div>
+                      <span className="text-white font-medium">{feature}</span>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* CTA Buttons */}
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Link href="/signup">
+                    <motion.button
+                      whileHover={{ scale: 1.05, boxShadow: "0 0 40px rgba(168, 85, 247, 0.6)" }}
+                      whileTap={{ scale: 0.95 }}
+                      className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 text-white rounded-xl font-bold text-lg hover:from-purple-600 hover:via-pink-600 hover:to-orange-600 transition-all shadow-lg shadow-purple-500/50"
+                    >
+                      <Sparkles className="inline mr-2" size={20} />
+                      Get Started Free
+                    </motion.button>
+                  </Link>
+
+                  <Link href="/gallery">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="w-full sm:w-auto px-8 py-4 border-2 border-purple-500 text-purple-300 rounded-xl font-bold text-lg hover:bg-purple-500/20 transition-all"
+                    >
+                      <Palette className="inline mr-2" size={20} />
+                      Explore Gallery
+                    </motion.button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Why Free Section */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+            className="mt-20 text-center max-w-3xl mx-auto"
+          >
+            <motion.div
+              animate={floatingAnimation}
+              className="mb-6"
+            >
+              <Heart className="w-16 h-16 text-pink-400 mx-auto" />
+            </motion.div>
+
+            <h2 className="text-3xl font-bold text-white mb-4">Why Is Everything Free?</h2>
+            <p className="text-lg text-gray-300 mb-6">
+              We believe creativity should be accessible to everyone. No paywalls, no premium features, 
+              no limitations. SpookySketch is built for artists, by artists, with love and passion. ❤️
+            </p>
+
+            <div className="grid md:grid-cols-3 gap-6 mt-10">
+              {[
+                { icon: Palette, title: 'For Artists', desc: 'Made by creators for creators' },
+                { icon: Heart, title: 'Community First', desc: 'Built with love, not profit' },
+                { icon: Zap, title: 'No Barriers', desc: 'Everyone deserves great tools' },
+              ].map((item, i) => (
+                <motion.div
+                  key={item.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1.2 + i * 0.1 }}
+                  whileHover={{ y: -10, scale: 1.05 }}
+                  className="spooky-card p-6 text-center hover:border-purple-500/50 transition-all"
+                >
+                  <motion.div
+                    animate={{ rotate: [0, 360] }}
+                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                  >
+                    <item.icon className="w-12 h-12 text-purple-400 mx-auto mb-4" />
+                  </motion.div>
+                  <h3 className="font-bold text-xl text-white mb-2">{item.title}</h3>
+                  <p className="text-gray-400">{item.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
         </div>
       </div>
-    </div>
-  );
-}
-
-function PricingCard({
-  title,
-  price,
-  period,
-  icon,
-  features,
-  buttonText,
-  buttonDisabled,
-  buttonAction,
-  loading,
-  popular,
-  gradient,
-}: {
-  title: string;
-  price: string;
-  period: string;
-  icon: React.ReactNode;
-  features: string[];
-  buttonText: string;
-  buttonDisabled?: boolean;
-  buttonAction?: () => void;
-  loading?: boolean;
-  popular?: boolean;
-  gradient?: boolean;
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      className={`spooky-card relative ${popular ? 'ring-2 ring-orange-500' : ''} ${
-        gradient ? 'bg-gradient-to-br from-purple-900/20 to-orange-900/20' : ''
-      }`}
-    >
-      {popular && (
-        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-orange-500 text-white px-4 py-1 rounded-full text-sm font-bold">
-          MOST POPULAR
-        </div>
-      )}
-
-      <div className="text-center mb-6">
-        <div className="text-orange-500 mb-3 flex justify-center">{icon}</div>
-        <h3 className="text-2xl font-bold mb-2">{title}</h3>
-        <div className="text-4xl font-bold text-white mb-1">
-          {price}
-          <span className="text-lg text-gray-400">{period}</span>
-        </div>
-      </div>
-
-      <ul className="space-y-3 mb-8">
-        {features.map((feature, index) => (
-          <li key={index} className="flex items-start gap-2 text-gray-300">
-            <Check size={20} className="text-orange-500 flex-shrink-0 mt-0.5" />
-            <span>{feature}</span>
-          </li>
-        ))}
-      </ul>
-
-      <button
-        onClick={buttonAction}
-        disabled={buttonDisabled || loading}
-        className={`w-full spooky-btn ${
-          buttonDisabled ? 'opacity-50 cursor-not-allowed' : ''
-        }`}
-      >
-        {loading ? (
-          <span className="flex items-center justify-center">
-            <div className="loading-spinner mr-2" style={{ width: 20, height: 20 }}></div>
-            Processing...
-          </span>
-        ) : (
-          buttonText
-        )}
-      </button>
-    </motion.div>
-  );
-}
-
-function FAQItem({ question, answer }: { question: string; answer: string }) {
-  return (
-    <div className="spooky-card">
-      <h4 className="font-bold text-lg mb-2 text-orange-500">{question}</h4>
-      <p className="text-gray-400">{answer}</p>
     </div>
   );
 }

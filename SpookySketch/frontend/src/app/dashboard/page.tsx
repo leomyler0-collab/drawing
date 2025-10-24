@@ -7,11 +7,7 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import toast from 'react-hot-toast';
 import { localDB } from '@/utils/localStorageDB';
-import FreeDashboard from '@/components/dashboards/FreeDashboard';
-import ProDashboard from '@/components/dashboards/ProDashboard';
-import VipDashboard from '@/components/dashboards/VipDashboard';
-import JanetVIPDashboard from '@/components/dashboards/JanetVIPDashboard';
-import Nicky23VIPDashboard from '@/components/dashboards/Nicky23VIPDashboard';
+import UnifiedDashboard from '@/components/dashboards/UnifiedDashboard';
 import AdminDashboard from '@/components/dashboards/AdminDashboard';
 import { clientAuth } from '@/utils/clientAuth';
 
@@ -154,7 +150,7 @@ export default function DashboardPage() {
 
   if (!user) return null;
 
-  // Route to tier-specific dashboard
+  // Route to dashboard (admin vs unified)
   const dashboardProps = {
     user,
     drawings,
@@ -163,27 +159,11 @@ export default function DashboardPage() {
     onUpdate: fetchData,
   };
 
-  // Route to custom elite dashboards for special VIP users
-  if (user.tier === 'vip') {
-    // Janet gets her royal purple/pink dashboard
-    if (user.email === 'ronet@gmail.com' || user.username === 'Janet') {
-      return <JanetVIPDashboard {...dashboardProps} />;
-    }
-    // Nicky23 gets diamond cyan/pink dashboard
-    if (user.email === 'nicky23@gmail.com' || user.username === 'Nicky23') {
-      return <Nicky23VIPDashboard {...dashboardProps} />;
-    }
-    // Other VIPs get standard VIP dashboard
-    return <VipDashboard {...dashboardProps} />;
+  // Only admin gets special dashboard, everyone else gets unified dashboard with unlimited features
+  if (user.tier === 'admin') {
+    return <AdminDashboard {...dashboardProps} />;
   }
 
-  switch (user.tier) {
-    case 'admin':
-      return <AdminDashboard {...dashboardProps} />;
-    case 'pro':
-      return <ProDashboard {...dashboardProps} />;
-    case 'free':
-    default:
-      return <FreeDashboard {...dashboardProps} />;
-  }
+  // All regular users get the same unlimited experience
+  return <UnifiedDashboard {...dashboardProps} />;
 }
