@@ -5,9 +5,13 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Brush, Ghost, Sparkles, Users, Crown, Zap } from 'lucide-react';
 import Navbar from '@/components/Navbar';
+import { useTheme } from '@/contexts/ThemeContext';
+import { getThemeConfig } from '@/config/themes';
 
 export default function HomePage() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const { theme } = useTheme();
+  const config = getThemeConfig(theme);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -25,27 +29,25 @@ export default function HomePage() {
       <section className="relative pt-32 pb-20 px-4 overflow-hidden">
         {/* Animated background elements */}
         <div className="absolute inset-0 pointer-events-none">
-          <motion.div
-            className="absolute top-20 left-10 text-6xl opacity-10"
-            animate={{ y: [0, -20, 0] }}
-            transition={{ duration: 4, repeat: Infinity }}
-          >
-            🎃
-          </motion.div>
-          <motion.div
-            className="absolute top-40 right-20 text-5xl opacity-10"
-            animate={{ y: [0, 20, 0], rotate: [0, 10, 0] }}
-            transition={{ duration: 5, repeat: Infinity }}
-          >
-            👻
-          </motion.div>
-          <motion.div
-            className="absolute bottom-20 left-1/4 text-4xl opacity-10"
-            animate={{ y: [0, -15, 0] }}
-            transition={{ duration: 3, repeat: Infinity }}
-          >
-            🕷️
-          </motion.div>
+          {config.emojis.slice(0, 3).map((emoji, i) => (
+            <motion.div
+              key={`emoji-${i}`}
+              className={`absolute text-${i === 0 ? '6xl' : i === 1 ? '5xl' : '4xl'} opacity-10`}
+              style={{
+                top: i === 0 ? '20%' : i === 1 ? '40%' : 'auto',
+                bottom: i === 2 ? '20%' : 'auto',
+                left: i === 0 || i === 2 ? '10%' : 'auto',
+                right: i === 1 ? '20%' : 'auto',
+              }}
+              animate={{ 
+                y: [0, i === 1 ? 20 : -20, 0],
+                rotate: i === 1 ? [0, 10, 0] : undefined
+              }}
+              transition={{ duration: 3 + i, repeat: Infinity }}
+            >
+              {emoji}
+            </motion.div>
+          ))}
         </div>
 
         <div className="max-w-6xl mx-auto text-center relative z-10">
@@ -54,22 +56,27 @@ export default function HomePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <h1 className="text-6xl md:text-8xl font-bold mb-6 bg-gradient-to-r from-orange-500 via-purple-500 to-orange-500 bg-clip-text text-transparent">
-              SpookySketch
+            <h1 className={`text-6xl md:text-8xl font-bold mb-6 bg-gradient-to-r ${config.gradient.from} ${config.gradient.via} ${config.gradient.to} bg-clip-text text-transparent`}>
+              {config.title}
             </h1>
             <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto">
-              Unleash your creativity with our Halloween-themed drawing app.
-              Create, collaborate, and share spooky masterpieces! 🎃👻
+              {config.subtitle}
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
               <Link href="/studio">
                 <button className="spooky-btn text-white text-lg px-8 py-4">
                   <Brush className="inline mr-2" size={24} />
-                  Start Drawing
+                  {config.buttonText}
                 </button>
               </Link>
               <Link href="/pricing">
-                <button className="px-8 py-4 rounded-lg font-semibold text-lg border-2 border-orange-500 text-orange-500 hover:bg-orange-500/10 transition-all">
+                <button 
+                  className="px-8 py-4 rounded-lg font-semibold text-lg border-2 transition-all"
+                  style={{
+                    borderColor: config.colors.primary,
+                    color: config.colors.primary,
+                  }}
+                >
                   View Pricing
                 </button>
               </Link>

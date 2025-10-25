@@ -59,15 +59,38 @@ export default function GalleryPage() {
     console.log('🔄 [Gallery] Fetching gallery drawings...');
     
     try {
-      // Try backend first
+      // Try backend first with proper error handling
       const response = await drawingAPI.gallery(page);
       const backendDrawings = response.data.drawings || [];
       console.log(`✅ [Gallery] Loaded ${backendDrawings.length} drawings from backend`);
-      setAllDrawings(backendDrawings);
-      applyFiltersAndSort(backendDrawings);
+      
+      // Merge with localStorage public drawings to show all available content
+      const localPublicDrawings = localDB.getPublicDrawings();
+      const formattedLocalDrawings = localPublicDrawings.map(d => ({
+        _id: d.id,
+        title: d.title,
+        thumbnail: d.thumbnail,
+        likes: d.likes || 0,
+        views: d.views || 0,
+        userId: {
+          username: d.userId ? getUsername(d.userId) : 'Anonymous',
+          avatar: d.userId ? getAvatar(d.userId) : '👻'
+        },
+        createdAt: d.createdAt || new Date().toISOString(),
+        isPublic: true
+      }));
+      
+      // Combine and deduplicate (prefer backend version)
+      const backendIds = new Set(backendDrawings.map((d: any) => d._id));
+      const uniqueLocalDrawings = formattedLocalDrawings.filter(d => !backendIds.has(d._id));
+      const allDrawings = [...backendDrawings, ...uniqueLocalDrawings];
+      
+      console.log(`📊 [Gallery] Total: ${allDrawings.length} drawings (${backendDrawings.length} from backend, ${uniqueLocalDrawings.length} local-only)`);
+      setAllDrawings(allDrawings);
+      applyFiltersAndSort(allDrawings);
     } catch (error) {
       // Fallback to localStorage - ONLY show public drawings
-      console.log('⚡ [Gallery] Backend unavailable, using localStorage');
+      console.log('⚡ [Gallery] Backend unavailable, using localStorage only');
       
       try {
         const publicDrawings = localDB.getPublicDrawings();

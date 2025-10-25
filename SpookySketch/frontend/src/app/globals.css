@@ -3,6 +3,22 @@
 @tailwind utilities;
 
 @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@400;700&family=Pacifico&display=swap');
+
+/* CSS Variables for Theming */
+:root {
+  /* Default (Halloween) Theme */
+  --color-primary: #FF6B00;
+  --color-secondary: #B660FF;
+  --color-accent: #00FF00;
+  --color-text: #F5F5F5;
+  --color-border: rgba(255, 107, 0, 0.3);
+  --color-bg-card: rgba(20, 20, 25, 0.8);
+  --gradient-from: #FF6B00;
+  --gradient-via: #B660FF;
+  --gradient-to: #FF6B00;
+  --theme-font: 'Inter', sans-serif;
+}
 
 * {
   margin: 0;
@@ -11,11 +27,12 @@
 }
 
 body {
-  font-family: 'Inter', sans-serif;
-  background: radial-gradient(circle at center, #0D0D0F 0%, #000000 100%);
-  color: #F5F5F5;
+  font-family: var(--theme-font);
+  background: var(--bg-gradient, radial-gradient(circle at center, #0D0D0F 0%, #000000 100%));
+  color: var(--color-text);
   min-height: 100vh;
   overflow-x: hidden;
+  transition: background 0.5s ease, color 0.3s ease;
 }
 
 /* Custom scrollbar */

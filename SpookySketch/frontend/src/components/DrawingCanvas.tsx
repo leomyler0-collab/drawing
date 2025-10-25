@@ -107,34 +107,7 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
     return () => clearInterval(interval);
   }, [autoSaveEnabled, history.length]);
 
-  // Load drawing for editing
-  useEffect(() => {
-    const editId = searchParams?.get('edit');
-    if (editId && canvasRef.current) {
-      const drawing = localDB.getDrawing(editId);
-      if (drawing) {
-        setEditingDrawingId(editId);
-        setDrawingTitle(drawing.title);
-        
-        // Load the drawing onto canvas
-        const canvas = canvasRef.current;
-        const ctx = canvas?.getContext('2d');
-        if (ctx && drawing.canvasData) {
-          const img = new Image();
-          img.onload = () => {
-            canvas.width = drawing.width;
-            canvas.height = drawing.height;
-            ctx.drawImage(img, 0, 0);
-            saveToHistory(ctx);
-            toast.success(`Loaded "${drawing.title}" for editing! ✏️`);
-          };
-          img.src = drawing.canvasData;
-        }
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
-
+  // Initialize canvas first, then load drawing if editing
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -158,21 +131,59 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
         height = Math.min(canvasSize.height, window.innerHeight - 100);
       }
       
+      // Save current canvas content before resizing
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      
       canvas.width = width;
       canvas.height = height;
       
-      // Set initial background
-      ctx.fillStyle = backgroundColor;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Restore content if it existed, otherwise set background
+      if (imageData && imageData.width > 0) {
+        ctx.putImageData(imageData, 0, 0);
+      } else {
+        ctx.fillStyle = backgroundColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
     };
 
     updateCanvasSize();
     saveToHistory(ctx);
     
+    // Load drawing for editing AFTER canvas is initialized
+    const editId = searchParams?.get('edit');
+    if (editId) {
+      const drawing = localDB.getDrawing(editId);
+      if (drawing) {
+        setEditingDrawingId(editId);
+        setDrawingTitle(drawing.title);
+        
+        // Load the drawing onto canvas
+        if (ctx && drawing.canvasData) {
+          const img = new Image();
+          img.onload = () => {
+            // Resize canvas to match drawing dimensions if needed
+            if (canvas.width !== drawing.width || canvas.height !== drawing.height) {
+              canvas.width = drawing.width;
+              canvas.height = drawing.height;
+            }
+            // Clear and draw the loaded image
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+            saveToHistory(ctx);
+            toast.success(`Loaded "${drawing.title}" for editing! ✏️`);
+          };
+          img.onerror = () => {
+            toast.error('Failed to load drawing');
+          };
+          img.src = drawing.canvasData;
+        }
+      }
+    }
+    
     window.addEventListener('resize', updateCanvasSize);
     return () => window.removeEventListener('resize', updateCanvasSize);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [searchParams]);
 
   const startDrawing = (e: React.PointerEvent<HTMLCanvasElement>) => {
     e.preventDefault();
@@ -397,32 +408,57 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
       
       let savedDrawing;
       
-      if (isEditing && editingDrawingId) {
-        // Update existing drawing
-        savedDrawing = localDB.updateDrawing(editingDrawingId, {
-          title: drawingTitle,
-          canvasData: dataURL,
-          thumbnail: thumbnailURL,
-          width: canvas.width,
-          height: canvas.height,
-        });
-        console.log('✅ Drawing updated:', editingDrawingId);
-        toast.success(`Updated "${drawingTitle}"! ✏️`);
+      // Try backend first
+      const token = Cookies.get('token');
+      if (token) {
+        try {
+          const drawingData = {
+            title: drawingTitle,
+            canvasData: dataURL,
+            thumbnail: thumbnailURL,
+            width: canvas.width,
+            height: canvas.height,
+            tags: ['spooky', 'halloween'],
+            isPublic: false,
+          };
+
+          if (isEditing && editingDrawingId) {
+            // Update existing drawing via API
+            const response = await axios.put(
+              `${API_URL}/api/drawings/${editingDrawingId}`,
+              drawingData,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            console.log('✅ Drawing updated on backend:', response.data);
+            toast.success(`Updated "${drawingTitle}" on cloud! ✏️`);
+            
+            // Also update locally
+            localDB.updateDrawing(editingDrawingId, drawingData);
+          } else {
+            // Create new drawing via API
+            const response = await axios.post(
+              `${API_URL}/api/drawings/create`,
+              drawingData,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            console.log('✅ Drawing saved to backend:', response.data);
+            toast.success(`Saved "${drawingTitle}" to cloud! 🎃`);
+            
+            // Also save locally with backend ID
+            savedDrawing = localDB.saveDrawing({
+              userId: currentUserId || undefined,
+              ...drawingData,
+              isFavorite: false,
+            });
+          }
+        } catch (apiError) {
+          console.warn('Backend save failed, falling back to localStorage:', apiError);
+          // Fall through to localStorage save below
+          throw apiError;
+        }
       } else {
-        // Save new drawing
-        savedDrawing = localDB.saveDrawing({
-          userId: currentUserId || undefined,
-          title: drawingTitle,
-          canvasData: dataURL,
-          thumbnail: thumbnailURL,
-          width: canvas.width,
-          height: canvas.height,
-          tags: ['spooky', 'halloween'],
-          isFavorite: false,
-          isPublic: false,
-        });
-        console.log('✅ Drawing saved:', savedDrawing.id);
-        toast.success(`Saved "${drawingTitle}"! 🎃`);
+        // No token, use localStorage
+        throw new Error('No authentication token');
       }
 
       setShowSaveModal(false);
@@ -432,9 +468,52 @@ export default function DrawingCanvas({ user }: DrawingCanvasProps) {
       localDB.clearDraft();
       setLastAutoSave(null);
     } catch (error) {
-      console.error('Save error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to save drawing';
-      toast.error(errorMessage);
+      // Fallback to localStorage if backend fails
+      console.log('💾 Saving to localStorage (backend unavailable)');
+      
+      try {
+        const dataURL = canvas.toDataURL('image/png', 1.0);
+        const thumbnailCanvas = document.createElement('canvas');
+        thumbnailCanvas.width = 400;
+        thumbnailCanvas.height = (canvas.height / canvas.width) * 400;
+        const thumbnailCtx = thumbnailCanvas.getContext('2d');
+        if (thumbnailCtx) {
+          thumbnailCtx.drawImage(canvas, 0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
+        }
+        const thumbnailURL = thumbnailCanvas.toDataURL('image/png', 0.7);
+
+        if (isEditing && editingDrawingId) {
+          localDB.updateDrawing(editingDrawingId, {
+            title: drawingTitle,
+            canvasData: dataURL,
+            thumbnail: thumbnailURL,
+            width: canvas.width,
+            height: canvas.height,
+          });
+          toast.success(`Updated "${drawingTitle}" locally! ✏️`);
+        } else {
+          localDB.saveDrawing({
+            userId: currentUserId || undefined,
+            title: drawingTitle,
+            canvasData: dataURL,
+            thumbnail: thumbnailURL,
+            width: canvas.width,
+            height: canvas.height,
+            tags: ['spooky', 'halloween'],
+            isFavorite: false,
+            isPublic: false,
+          });
+          toast.success(`Saved "${drawingTitle}" locally! 💾`);
+        }
+
+        setShowSaveModal(false);
+        setDrawingTitle('');
+        localDB.clearDraft();
+        setLastAutoSave(null);
+      } catch (localError) {
+        console.error('Save error:', localError);
+        toast.error('Failed to save drawing');
+      }
     }
   };
 
