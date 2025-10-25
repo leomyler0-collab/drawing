@@ -29,21 +29,27 @@ export default function HomePage() {
       <section className="relative pt-32 pb-20 px-4 overflow-hidden">
         {/* Animated background elements */}
         <div className="absolute inset-0 pointer-events-none">
-          {config.emojis.slice(0, 3).map((emoji, i) => (
+          {config.emojis.slice(0, 5).map((emoji, i) => (
             <motion.div
               key={`emoji-${i}`}
-              className={`absolute text-${i === 0 ? '6xl' : i === 1 ? '5xl' : '4xl'} opacity-10`}
+              className={`absolute text-${i < 2 ? '6xl' : '5xl'} opacity-20`}
               style={{
-                top: i === 0 ? '20%' : i === 1 ? '40%' : 'auto',
-                bottom: i === 2 ? '20%' : 'auto',
-                left: i === 0 || i === 2 ? '10%' : 'auto',
-                right: i === 1 ? '20%' : 'auto',
+                top: `${10 + i * 15}%`,
+                left: `${5 + i * 18}%`,
+                filter: `drop-shadow(0 0 20px ${config.colors.primary}40)`,
               }}
               animate={{ 
-                y: [0, i === 1 ? 20 : -20, 0],
-                rotate: i === 1 ? [0, 10, 0] : undefined
+                y: [0, -30, 0],
+                x: [0, i % 2 === 0 ? 15 : -15, 0],
+                rotate: [0, i * 45, 0],
+                scale: [1, 1.2, 1],
               }}
-              transition={{ duration: 3 + i, repeat: Infinity }}
+              transition={{ 
+                duration: 4 + i * 0.5, 
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: i * 0.3,
+              }}
             >
               {emoji}
             </motion.div>
@@ -56,31 +62,59 @@ export default function HomePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <h1 className={`text-6xl md:text-8xl font-bold mb-6 bg-gradient-to-r ${config.gradient.from} ${config.gradient.via} ${config.gradient.to} bg-clip-text text-transparent`}>
+            <motion.h1 
+              className={`text-6xl md:text-8xl font-bold mb-6 bg-gradient-to-r ${config.gradient.from} ${config.gradient.via} ${config.gradient.to} bg-clip-text text-transparent`}
+              style={{ fontFamily: config.font.headingFamily }}
+              animate={{ 
+                scale: [1, 1.02, 1],
+              }}
+              transition={{ 
+                duration: 3, 
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            >
               {config.title}
-            </h1>
-            <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto">
+            </motion.h1>
+            <motion.p 
+              className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto"
+              style={{ color: config.colors.textSecondary }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.8 }}
+            >
               {config.subtitle}
-            </p>
-            <div className="flex gap-4 justify-center flex-wrap">
+            </motion.p>
+            <motion.div 
+              className="flex gap-4 justify-center flex-wrap"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.8 }}
+            >
               <Link href="/studio">
-                <button className="spooky-btn text-white text-lg px-8 py-4">
+                <motion.button 
+                  className="spooky-btn text-white text-lg px-8 py-4"
+                  whileHover={{ scale: 1.05, y: -3 }}
+                  whileTap={{ scale: 0.95 }}
+                >
                   <Brush className="inline mr-2" size={24} />
                   {config.buttonText}
-                </button>
+                </motion.button>
               </Link>
               <Link href="/pricing">
-                <button 
+                <motion.button 
                   className="px-8 py-4 rounded-lg font-semibold text-lg border-2 transition-all"
                   style={{
                     borderColor: config.colors.primary,
                     color: config.colors.primary,
                   }}
+                  whileHover={{ scale: 1.05, y: -3, borderColor: config.colors.secondary }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   View Pricing
-                </button>
+                </motion.button>
               </Link>
-            </div>
+            </motion.div>
           </motion.div>
         </div>
       </section>
@@ -88,9 +122,19 @@ export default function HomePage() {
       {/* Features Section */}
       <section className="py-20 px-4 bg-black/30">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-orange-500">
-            Spooky Features 🕸️
-          </h2>
+          <motion.h2 
+            className="text-4xl md:text-5xl font-bold text-center mb-16"
+            style={{ 
+              color: config.colors.primary,
+              fontFamily: config.font.headingFamily 
+            }}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+          >
+            {theme === 'halloween' ? 'Spooky Features 🕸️' : theme === 'christmas' ? 'Festive Features 🎄' : 'Amazing Features ✨'}
+          </motion.h2>
           
           <div className="grid md:grid-cols-3 gap-8">
             <FeatureCard
@@ -134,39 +178,74 @@ export default function HomePage() {
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              Ready to Get Spooky? 🎃
-            </h2>
-            <p className="text-xl text-gray-300 mb-8">
-              Join thousands of artists creating Halloween masterpieces
+            <motion.h2 
+              className="text-4xl md:text-5xl font-bold mb-6"
+              style={{ 
+                color: config.colors.text,
+                fontFamily: config.font.headingFamily 
+              }}
+            >
+              {theme === 'halloween' ? 'Ready to Get Spooky? 🎃' : theme === 'christmas' ? 'Ready to Celebrate? 🎄' : 'Ready to Create? 🎆'}
+            </motion.h2>
+            <p className="text-xl mb-8" style={{ color: config.colors.textSecondary }}>
+              {theme === 'halloween' ? 'Join thousands of artists creating spooky masterpieces' : theme === 'christmas' ? 'Join the festive community creating holiday magic' : 'Join the celebration and unleash your creativity'}
             </p>
             <Link href="/signup">
-              <button className="spooky-btn text-white text-lg px-10 py-4">
+              <motion.button 
+                className="spooky-btn text-white text-lg px-10 py-4"
+                whileHover={{ scale: 1.08, y: -4 }}
+                whileTap={{ scale: 0.95 }}
+              >
                 Sign Up Free
-              </button>
+              </motion.button>
             </Link>
           </motion.div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-orange-500/20 py-8 px-4 text-center text-gray-400">
-        <p>© 2024 SpookySketch. All rights reserved. Made with 🎃 and 💜</p>
+      <footer 
+        className="border-t py-8 px-4 text-center"
+        style={{ 
+          borderTopColor: `${config.colors.border}`,
+          color: config.colors.textSecondary 
+        }}
+      >
+        <p>© 2024 {config.title}. All rights reserved. Made with {config.emoji} and 💜</p>
       </footer>
     </div>
   );
 }
 
 function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
+  const { theme } = useTheme();
+  const config = getThemeConfig(theme);
+  
   return (
     <motion.div
-      className="spooky-card text-center hover:scale-105 transition-transform"
-      whileHover={{ y: -5 }}
+      className="spooky-card text-center p-6 rounded-xl border"
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      whileHover={{ 
+        y: -8,
+        scale: 1.03,
+        boxShadow: `0 12px 40px ${config.colors.primary}40`,
+      }}
+      transition={{ duration: 0.3 }}
+      viewport={{ once: true }}
     >
-      <div className="text-orange-500 mb-4 flex justify-center">{icon}</div>
-      <h3 className="text-xl font-bold mb-2 text-white">{title}</h3>
-      <p className="text-gray-400">{description}</p>
+      <motion.div 
+        className="mb-4 flex justify-center"
+        style={{ color: config.colors.primary }}
+        whileHover={{ rotate: 360, scale: 1.2 }}
+        transition={{ duration: 0.5 }}
+      >
+        {icon}
+      </motion.div>
+      <h3 className="text-xl font-bold mb-2" style={{ color: config.colors.text }}>{title}</h3>
+      <p style={{ color: config.colors.textSecondary }}>{description}</p>
     </motion.div>
   );
 }

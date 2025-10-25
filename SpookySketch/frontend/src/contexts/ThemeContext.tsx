@@ -7,55 +7,31 @@ export type Theme = 'halloween' | 'christmas' | 'newyear';
 interface ThemeContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
-  isTestMode: boolean;
-  setIsTestMode: (value: boolean) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>('halloween');
-  const [isTestMode, setIsTestMode] = useState(false);
 
   useEffect(() => {
-    // Check if test mode is enabled in localStorage
-    const testMode = localStorage.getItem('theme_test_mode') === 'true';
-    setIsTestMode(testMode);
+    // Auto-select theme based on current date
+    const currentTheme = getThemeByDate();
+    setTheme(currentTheme);
 
-    if (testMode) {
-      // In test mode, use saved theme preference
-      const savedTheme = localStorage.getItem('theme_preference') as Theme;
-      if (savedTheme) {
-        setTheme(savedTheme);
+    // Update theme daily
+    const interval = setInterval(() => {
+      const newTheme = getThemeByDate();
+      if (newTheme !== theme) {
+        setTheme(newTheme);
       }
-    } else {
-      // In production, auto-select theme based on date
-      const currentTheme = getThemeByDate();
-      setTheme(currentTheme);
-    }
-  }, []);
+    }, 1000 * 60 * 60 * 24); // Check once per day
 
-  const handleSetTheme = (newTheme: Theme) => {
-    setTheme(newTheme);
-    if (isTestMode) {
-      localStorage.setItem('theme_preference', newTheme);
-    }
-  };
-
-  const handleSetTestMode = (value: boolean) => {
-    setIsTestMode(value);
-    localStorage.setItem('theme_test_mode', value.toString());
-    
-    if (!value) {
-      // Exiting test mode, switch to date-based theme
-      localStorage.removeItem('theme_preference');
-      const currentTheme = getThemeByDate();
-      setTheme(currentTheme);
-    }
-  };
+    return () => clearInterval(interval);
+  }, [theme]);
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme: handleSetTheme, isTestMode, setIsTestMode: handleSetTestMode }}>
+    <ThemeContext.Provider value={{ theme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );
